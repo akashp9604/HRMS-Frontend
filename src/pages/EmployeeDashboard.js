@@ -22,16 +22,16 @@ export default function EmployeeDashboard() {
     pendingPunchDates: []
   });
 
+  const [dailyAttendance, setDailyAttendance] = useState([]);
+  const [dailyLoading, setDailyLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [attendanceLoading, setAttendanceLoading] = useState(true);
   const [selectedMonthYear, setSelectedMonthYear] = useState("");
 
-  // Get employee info from localStorage
   const employee = JSON.parse(localStorage.getItem("employee"));
   const employeeId = employee?.employeeId;
   const employeeName = employee?.employeeName;
 
-  // Initialize with current month and year
   useEffect(() => {
     const currentDate = new Date();
     const currentMonth = currentDate.getMonth() + 1;
@@ -40,70 +40,39 @@ export default function EmployeeDashboard() {
     setSelectedMonthYear(defaultMonthYear);
   }, []);
 
-  // Common Auth Setup
   const getAuthHeader = () => {
     const authUser = JSON.parse(localStorage.getItem("authUser"));
-    if (!authUser) {
-      console.error("No auth user found. Please log in again.");
-      return {};
-    }
+    if (!authUser) return {};
     const { username, password } = authUser;
     return { Authorization: "Basic " + btoa(`${username}:${password}`) };
   };
 
-  // Fetch Employee Leave Statistics (this doesn't depend on month selection)
+  // Fetch Leave Stats
   useEffect(() => {
-    if (!employeeId) {
-      console.error("No employee ID found");
-      setLoading(false);
-      setAttendanceLoading(false);
-      return;
-    }
-
+    if (!employeeId) { setLoading(false); return; }
     const headers = getAuthHeader();
-    if (!headers.Authorization) {
-      setLoading(false);
-      setAttendanceLoading(false);
-      return;
-    }
 
     const fetchEmployeeData = async () => {
       try {
         setLoading(true);
-
-        // Fetch leave balance
         const balanceResponse = await axios.get(
           `http://localhost:8087/api/leaves/leave-balance/${employeeId}`,
           { headers }
         );
-
-        // Fetch employee leaves
         const leavesResponse = await axios.get(
           `http://localhost:8087/api/leaves/employee/${employeeId}`,
           { headers }
         );
-
         const leaves = leavesResponse.data || [];
-        
-        // Calculate leave statistics
-        const approvedLeaves = leaves.filter(leave => leave.status === 'APPROVED').length;
-        const pendingLeaves = leaves.filter(leave => leave.status === 'PENDING').length;
+        const approvedLeaves = leaves.filter(l => l.status === 'APPROVED').length;
+        const pendingLeaves = leaves.filter(l => l.status === 'PENDING').length;
         const totalRequests = leaves.length;
-        
-        // Calculate total leave balance
         const leaveBalance = Object.values(balanceResponse.data || {}).reduce(
           (sum, balance) => sum + (Number(balance) || 0), 0
         );
-
-        setLeaveStats({
-          approvedLeaves,
-          pendingLeaves,
-          totalRequests,
-          leaveBalance
-        });
-
+        setLeaveStats({ approvedLeaves, pendingLeaves, totalRequests, leaveBalance });
       } catch (error) {
-        console.error("Error fetching employee data:", error);
+        console.error("Error fetching leave data:", error);
       } finally {
         setLoading(false);
       }
@@ -112,13 +81,9 @@ export default function EmployeeDashboard() {
     fetchEmployeeData();
   }, [employeeId]);
 
-  // Fetch Monthly Attendance Summary (this depends on selected month and year)
+  // Fetch Monthly Attendance Summary + Daily Records
   useEffect(() => {
-    if (!employeeId || !selectedMonthYear) {
-      console.error("No employee ID or month year found for attendance data");
-      setAttendanceLoading(false);
-      return;
-    }
+    if (!employeeId || !selectedMonthYear) { setAttendanceLoading(false); return; }
 
     const fetchMonthlyAttendance = async () => {
       try {
@@ -136,6 +101,8 @@ export default function EmployeeDashboard() {
             }
           }
         );
+
+        console.log("RAW API RESPONSE:", JSON.stringify(response.data, null, 2)); 
 
         console.log("✅ Monthly Attendance Response:", response.data);
 
@@ -156,7 +123,6 @@ export default function EmployeeDashboard() {
       } catch (error) {
         console.error("❌ Error fetching monthly attendance:", error);
         
-        // Set default values if API fails
         setAttendanceStats({
           presentDays: 0,
           absentDays: 0,
@@ -176,70 +142,64 @@ export default function EmployeeDashboard() {
     fetchMonthlyAttendance();
   }, [employeeId, selectedMonthYear]);
 
-  // Handle month-year selection change
-  const handleMonthYearChange = (event) => {
-    setSelectedMonthYear(event.target.value);
-  };
+  const handleMonthYearChange = (e) => setSelectedMonthYear(e.target.value);
 
-  // Generate month-year options (last 12 months)
   const generateMonthYearOptions = () => {
     const options = [];
     const currentDate = new Date();
-    
     for (let i = 0; i < 12; i++) {
       const date = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
       const year = date.getFullYear();
       const month = date.getMonth() + 1;
       const value = `${year}-${month.toString().padStart(2, '0')}`;
       const label = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-      
       options.unshift({ value, label });
     }
-    
     return options;
   };
 
-  const isLoading = loading || (attendanceLoading && selectedMonthYear);
-
-  if (isLoading && !selectedMonthYear) {
-    return (
-      <div className="container mt-4">
-        <div className="d-flex justify-content-center align-items-center" style={{ height: '50vh' }}>
-          <div className="text-center">
-            <div className="spinner-border text-primary mb-3" style={{width: '3rem', height: '3rem'}} role="status">
-              <span className="visually-hidden">Loading...</span>
-            </div>
-            <h5 className="text-muted">Loading your dashboard...</h5>
-            <p className="text-muted small">Fetching leave and attendance data</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Helper function to format month name
   const getMonthName = (monthYear) => {
+    if (!monthYear) return '';
     const [year, month] = monthYear.split('-');
-    const date = new Date(year, month - 1);
-    return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    return new Date(year, month - 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   };
 
-  // Calculate attendance rate
   const calculateAttendanceRate = () => {
     if (attendanceStats.actualWorkingDays === 0) return 0;
     return ((attendanceStats.presentDays / attendanceStats.actualWorkingDays) * 100).toFixed(1);
   };
 
-  // Format date for display
-  const formatDateDisplay = (dateString) => {
-    return new Date(dateString).toLocaleDateString('en-US', { 
-      day: 'numeric', 
-      month: 'short' 
-    });
+  const formatTime = (timeStr) => {
+    if (!timeStr || timeStr === "00:00:00.000000") return "--";
+    const [h, m] = timeStr.split(':');
+    const hour = parseInt(h);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const displayHour = hour % 12 || 12;
+    return `${displayHour}:${m} ${ampm}`;
   };
+
+  const getStatusBadge = (status) => {
+    const map = {
+      PRESENT:      { bg: "bg-success",          label: "✅ Present" },
+      ABSENT:       { bg: "bg-danger",            label: "❌ Absent" },
+      LEAVE:        { bg: "bg-info text-dark",    label: "🏖️ Leave" },
+      HALF_DAY:     { bg: "bg-warning text-dark", label: "🌗 Half Day" },
+      PENDING_PUNCH:{ bg: "bg-warning text-dark", label: "⚠️ Pending Punch" },
+    };
+    const s = map[status] || { bg: "bg-secondary", label: status };
+    return <span className={`badge ${s.bg}`}>{s.label}</span>;
+  };
+
+  const formatDateDisplay = (dateString) => {
+    return new Date(dateString).toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
+  };
+
+  // Compute leave days from daily records for Leave Management section
+  const leaveRecords = dailyAttendance.filter(r => r.attendanceStatus === "LEAVE");
 
   return (
     <div className="container mt-4">
+
       {/* Welcome Header */}
       <div className="row mb-4">
         <div className="col-12">
@@ -249,35 +209,34 @@ export default function EmployeeDashboard() {
                 <div className="col-md-8">
                   <h2 className="fw-bold mb-2">Welcome back, {employeeName || 'Employee'}! 👋</h2>
                   <p className="mb-0 opacity-75">
-                    Here's your overview for {getMonthName(selectedMonthYear)}. Track your leaves, attendance, and quick actions.
+                    Here's your overview for {getMonthName(selectedMonthYear)}
                   </p>
                 </div>
                 <div className="col-md-4 text-md-end">
-                  <div className="d-flex align-items-center justify-content-md-end gap-3">
-                    {/* Month-Year Selector */}
-                    <div className="bg-light rounded px-3 py-2">
-                      <label htmlFor="monthYearSelect" className="form-label text-primary mb-1 small fw-bold">
-                        📅 Select Month
-                      </label>
-                      <select 
+                  <div className="d-flex align-items-center justify-content-md-end gap-2">
+                    <div className="bg-light rounded px-2 py-3">
+                      <label
+  htmlFor="monthYearSelect"
+  className="form-label text-primary mb-0 small fw-bold"
+  style={{ paddingRight: "30px" }}
+>
+  📅 Select Month
+</label>
+                      <select
                         id="monthYearSelect"
-                        className="form-select form-select-sm border-0 bg-light text-dark fw-bold"
+                        className="form-select form-select-sm bg-white text-dark fw-bold border-primary"
                         value={selectedMonthYear}
                         onChange={handleMonthYearChange}
-                        style={{ minWidth: '180px' }}
+                        style={{ minWidth: "106px" }}
                         disabled={attendanceLoading}
                       >
                         {generateMonthYearOptions().map(option => (
-                          <option key={option.value} value={option.value}>
-                            {option.label}
-                          </option>
+                          <option key={option.value} value={option.value}>{option.label}</option>
                         ))}
                       </select>
                     </div>
                     {attendanceLoading && (
-                      <div className="spinner-border spinner-border-sm text-light" role="status">
-                        <span className="visually-hidden">Loading...</span>
-                      </div>
+                      <div className="spinner-border spinner-border-sm text-light" role="status" />
                     )}
                   </div>
                 </div>
@@ -287,208 +246,72 @@ export default function EmployeeDashboard() {
         </div>
       </div>
 
-      {/* Monthly Attendance Summary Row */}
+      {/* Monthly Attendance Summary */}
       <div className="row mb-4">
         <div className="col-12">
           <div className="card border-0 shadow-sm">
             <div className="card-header bg-white border-0 py-3">
               <div className="d-flex justify-content-between align-items-center">
                 <h5 className="fw-bold mb-0 text-dark">
-                  📊 Monthly Attendance Summary - {getMonthName(selectedMonthYear)}
+                  📊 Monthly Attendance Summary — {getMonthName(selectedMonthYear)}
                   {attendanceLoading && (
-                    <span className="ms-2 spinner-border spinner-border-sm text-primary" role="status">
-                      <span className="visually-hidden">Loading...</span>
-                    </span>
+                    <span className="ms-2 spinner-border spinner-border-sm text-primary" role="status" />
                   )}
                 </h5>
-                <div className="d-flex align-items-center gap-2">
-                  <span className="badge bg-primary fs-6">
-                    {attendanceStats.actualWorkingDays} Working Days
-                  </span>
-                  <button 
-                    className="btn btn-outline-primary btn-sm"
-                    onClick={() => {
-                      // This will trigger the useEffect to refetch data
-                      setAttendanceLoading(true);
-                    }}
-                    disabled={attendanceLoading}
-                  >
-                    {attendanceLoading ? (
-                      <>
-                        <span className="spinner-border spinner-border-sm me-2" role="status"></span>
-                        Loading...
-                      </>
-                    ) : (
-                      <>
-                        🔄 Refresh
-                      </>
-                    )}
-                  </button>
-                </div>
+                <span className="badge bg-primary fs-6">{attendanceStats.actualWorkingDays} Working Days</span>
               </div>
             </div>
             <div className="card-body">
               <div className="row">
-                <div className="col-xl-3 col-md-6 mb-3">
-                  <StatCard 
-                    title="Present Days" 
-                    value={attendanceStats.presentDays} 
-                    color="success"
-                    icon="✅"
-                    subtitle={`Out of ${attendanceStats.actualWorkingDays} days`}
-                    loading={attendanceLoading}
-                  />
-                </div>
-                <div className="col-xl-3 col-md-6 mb-3">
-                  <StatCard 
-                    title="Absent Days" 
-                    value={attendanceStats.absentDays} 
-                    color="danger"
-                    icon="❌"
-                    subtitle="Total absences this month"
-                    loading={attendanceLoading}
-                  />
-                </div>
-                <div className="col-xl-3 col-md-6 mb-3">
-                  <StatCard 
-                    title="Leave Days" 
-                    value={attendanceStats.leaveDays} 
-                    color="info"
-                    icon="🏖️"
-                    subtitle="Approved leave days"
-                    loading={attendanceLoading}
-                  />
-                </div>
-                <div className="col-xl-3 col-md-6 mb-3">
-                  <StatCard 
-                    title="Attendance Rate" 
-                    value={`${calculateAttendanceRate()}%`} 
-                    color="primary"
-                    icon="📈"
-                    subtitle="Overall attendance percentage"
-                    loading={attendanceLoading}
-                  />
-                </div>
+                {[
+                  { title: "Present Days",   
+                     value: attendanceStats.presentDays,   
+                      color: "success", icon: "✅", 
+                      subtitle: `Out of ${attendanceStats.actualWorkingDays} days` },
+                  { title: "Absent Days",     value: attendanceStats.absentDays,     color: "danger",  icon: "❌", subtitle: "Total absences this month" },
+                  { title: "Leave Days",      value: leaveRecords.length || attendanceStats.leaveDays, color: "info", icon: "🏖️", subtitle: "Leave days this month" },
+                  { title: "Attendance Rate", value: `${calculateAttendanceRate()}%`, color: "primary", icon: "📈", subtitle: "Overall attendance %" },
+                ].map((card, i) => (
+                  <div key={i} className="col-xl-3 col-md-6 mb-3">
+                    <StatCard {...card} loading={attendanceLoading} />
+                  </div>
+                ))}
               </div>
 
-              {/* Additional Attendance Metrics */}
+              {/* Work Hours Row */}
               <div className="row mt-3">
-                <div className="col-md-4">
-                  <div className="card bg-light border-0">
-                    <div className="card-body text-center py-3">
-                      <div className="d-flex align-items-center justify-content-center">
-                        <span className="fs-2 me-3">⏱️</span>
-                        <div>
-                          <h6 className="fw-bold mb-1">Total Hours</h6>
-                          <p className="mb-0 fs-5 text-info">
-                            {attendanceLoading ? (
-                              <div className="spinner-border spinner-border-sm text-info" role="status">
-                                <span className="visually-hidden">Loading...</span>
-                              </div>
-                            ) : (
-                              `${attendanceStats.totalWorkHours}h`
-                            )}
-                          </p>
+                {[
+                  { icon: "⏱️", label: "Total Hours",    value: `${attendanceStats.totalWorkHours}h`,   color: "text-info" },
+                  { icon: "📅", label: "Avg Hours/Day",  value: `${attendanceStats.averageWorkHours}h`, color: "text-success" },
+                  { icon: "⚠️", label: "Pending Punches",value: attendanceStats.pendingPunches,          color: "text-warning" },
+                ].map((item, i) => (
+                  <div key={i} className="col-md-4">
+                    <div className="card bg-light border-0">
+                      <div className="card-body text-center py-3">
+                        <div className="d-flex align-items-center justify-content-center">
+                          <span className="fs-2 me-3">{item.icon}</span>
+                          <div>
+                            <h6 className="fw-bold mb-1">{item.label}</h6>
+                            <p className={`mb-0 fs-5 ${item.color}`}>
+                              {attendanceLoading
+                                ? <span className="spinner-border spinner-border-sm" role="status" />
+                                : item.value}
+                            </p>
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
-                </div>
-                <div className="col-md-4">
-                  <div className="card bg-light border-0">
-                    <div className="card-body text-center py-3">
-                      <div className="d-flex align-items-center justify-content-center">
-                        <span className="fs-2 me-3">📅</span>
-                        <div>
-                          <h6 className="fw-bold mb-1">Avg Hours/Day</h6>
-                          <p className="mb-0 fs-5 text-success">
-                            {attendanceLoading ? (
-                              <div className="spinner-border spinner-border-sm text-success" role="status">
-                                <span className="visually-hidden">Loading...</span>
-                              </div>
-                            ) : (
-                              `${attendanceStats.averageWorkHours}h`
-                            )}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <div className="col-md-4">
-                  <div className="card bg-light border-0">
-                    <div className="card-body text-center py-3">
-                      <div className="d-flex align-items-center justify-content-center">
-                        <span className="fs-2 me-3">⚠️</span>
-                        <div>
-                          <h6 className="fw-bold mb-1">Pending Punches</h6>
-                          <p className="mb-0 fs-5 text-warning">
-                            {attendanceLoading ? (
-                              <div className="spinner-border spinner-border-sm text-warning" role="status">
-                                <span className="visually-hidden">Loading...</span>
-                              </div>
-                            ) : (
-                              attendanceStats.pendingPunches
-                            )}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                ))}
               </div>
-
-              {/* Leave Dates and Pending Punch Dates */}
-              {(attendanceStats.leaveDates.length > 0 || attendanceStats.pendingPunchDates.length > 0) && (
-                <div className="row mt-4">
-                  {attendanceStats.leaveDates.length > 0 && (
-                    <div className="col-md-6">
-                      <div className="card border-0 bg-success bg-opacity-10">
-                        <div className="card-body">
-                          <h6 className="fw-bold text-success mb-3">
-                            📅 Approved Leave Dates ({attendanceStats.leaveDates.length})
-                          </h6>
-                          <div className="d-flex flex-wrap gap-2">
-                            {attendanceStats.leaveDates.map((date, index) => (
-                              <span key={index} className="badge bg-success">
-                                {formatDateDisplay(date)}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  
-                  {attendanceStats.pendingPunchDates.length > 0 && (
-                    <div className="col-md-6">
-                      <div className="card border-0 bg-warning bg-opacity-10">
-                        <div className="card-body">
-                          <h6 className="fw-bold text-warning mb-3">
-                            ⚠️ Pending Punch Dates ({attendanceStats.pendingPunchDates.length})
-                          </h6>
-                          <div className="d-flex flex-wrap gap-2">
-                            {attendanceStats.pendingPunchDates.map((date, index) => (
-                              <span key={index} className="badge bg-warning text-dark">
-                                {formatDateDisplay(date)}
-                              </span>
-                            ))}
-                          </div>
-                          <small className="text-muted mt-2 d-block">
-                            Please complete your punch-in/out for these dates
-                          </small>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Employee Leave Stats Row */}
+   
+
+      {/* Leave Management Overview */}
       <div className="row mb-4">
         <div className="col-12">
           <div className="card border-0 shadow-sm">
@@ -497,51 +320,65 @@ export default function EmployeeDashboard() {
             </div>
             <div className="card-body">
               <div className="row">
-                <div className="col-xl-3 col-md-6 mb-3">
-                  <StatCard 
-                    title="Approved Leaves" 
-                    value={leaveStats.approvedLeaves} 
-                    color="success"
-                    icon="✅"
-                    subtitle="Leaves approved by manager"
-                  />
-                </div>
-                <div className="col-xl-3 col-md-6 mb-3">
-                  <StatCard 
-                    title="Pending Leaves" 
-                    value={leaveStats.pendingLeaves} 
-                    color="warning"
-                    icon="⏳"
-                    subtitle="Awaiting approval"
-                  />
-                </div>
-                <div className="col-xl-3 col-md-6 mb-3">
-                  <StatCard 
-                    title="Total Requests" 
-                    value={leaveStats.totalRequests} 
-                    color="info"
-                    icon="📋"
-                    subtitle="All leave applications"
-                  />
-                </div>
-                <div className="col-xl-3 col-md-6 mb-3">
-                  <StatCard 
-                    title="Leave Balance" 
-                    value={leaveStats.leaveBalance} 
-                    color="primary"
-                    icon="🎫"
-                    subtitle="Remaining leave days"
-                  />
-                </div>
+                {[
+                  { title: "Approved Leaves", value: leaveStats.approvedLeaves, color: "success", icon: "✅", subtitle: "Leaves approved by manager" },
+                  { title: "Pending Leaves",  value: leaveStats.pendingLeaves,  color: "warning", icon: "⏳", subtitle: "Awaiting approval" },
+                  { title: "Total Requests",  value: leaveStats.totalRequests,  color: "info",    icon: "📋", subtitle: "All leave applications" },
+                  { title: "Leave Balance",   value: leaveStats.leaveBalance,   color: "primary", icon: "🎫", subtitle: "Remaining leave days" },
+                ].map((card, i) => (
+                  <div key={i} className="col-xl-3 col-md-6 mb-3">
+                    <StatCard {...card} loading={loading} />
+                  </div>
+                ))}
               </div>
+
+              {/* Leave Records from daily attendance */}
+              {leaveRecords.length > 0 && (
+                <div className="mt-4">
+                  <h6 className="fw-bold text-muted mb-3">📅 Leave Days This Month</h6>
+                  <div className="table-responsive">
+                    <table className="table table-sm table-bordered align-middle">
+                      <thead className="table-light">
+                        <tr>
+                          <th>#</th>
+                          <th>Date</th>
+                          <th>Day</th>
+                          <th>Leave Type</th>
+                          <th>Source</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {leaveRecords.map((record, index) => {
+                          const dateObj = new Date(record.attendanceDate);
+                          const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
+                          return (
+                            <tr key={index}>
+                              <td>{index + 1}</td>
+                              <td className="fw-semibold">
+                                {dateObj.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
+                              </td>
+                              <td><span className="badge bg-light text-dark border">{dayName}</span></td>
+                              <td>
+                                <span className="badge bg-info text-dark">
+                                  {record.attendanceType || "Leave"}
+                                </span>
+                              </td>
+                              <td><small className="text-muted">{record.source || "SYSTEM"}</small></td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
       </div>
 
-      {/* Quick Actions and Information */}
+      {/* Quick Actions */}
       <div className="row">
-        {/* Quick Actions */}
         <div className="col-lg-8 mb-4">
           <div className="card border-0 shadow-sm h-100">
             <div className="card-header bg-white border-0 py-3">
@@ -549,175 +386,77 @@ export default function EmployeeDashboard() {
             </div>
             <div className="card-body">
               <div className="row g-3">
-                <div className="col-md-6">
-                  <div className="card bg-light border-0 h-100">
-                    <div className="card-body text-center p-4">
-                      <div className="display-4 text-primary mb-3">📝</div>
-                      <h5 className="fw-bold">Apply for Leave</h5>
-                      <p className="text-muted small mb-3">
-                        Submit a new leave application for approval
-                      </p>
-                      <a 
-                        href="/leaves"
-                        className="btn btn-primary w-100"
-                      >
-                        Apply Now
-                      </a>
+                {[
+                  { icon: "📝", title: "Apply for Leave",    desc: "Submit a new leave application",        href: "/leaves", btn: "btn-primary",   label: "Apply Now" },
+                  { icon: "📋", title: "My Leave Requests",  desc: "View and manage leave applications",    href: "/leaves", btn: "btn-info",      label: "View Requests" },
+                  { icon: "📅", title: "Leave Calendar",     desc: "Check schedule and company holidays",   href: "/leaves", btn: "btn-success",   label: "View Calendar" },
+                  { icon: "👥", title: "My Attendance",      desc: "Check attendance status and records",   href: "/attendance", btn: "btn-warning", label: "Check Attendance" },
+                ].map((action, i) => (
+                  <div key={i} className="col-md-6">
+                    <div className="card bg-light border-0 h-100">
+                      <div className="card-body text-center p-4">
+                        <div className="display-4 mb-3">{action.icon}</div>
+                        <h5 className="fw-bold">{action.title}</h5>
+                        <p className="text-muted small mb-3">{action.desc}</p>
+                        <a href={action.href} className={`btn ${action.btn} w-100 text-white`}>{action.label}</a>
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div className="col-md-6">
-                  <div className="card bg-light border-0 h-100">
-                    <div className="card-body text-center p-4">
-                      <div className="display-4 text-info mb-3">📋</div>
-                      <h5 className="fw-bold">My Leave Requests</h5>
-                      <p className="text-muted small mb-3">
-                        View and manage your existing leave applications
-                      </p>
-                      <a 
-                        href="/leaves"
-                        className="btn btn-info text-white w-100"
-                      >
-                        View Requests
-                      </a>
-                    </div>
-                  </div>
-                </div>
-                <div className="col-md-6">
-                  <div className="card bg-light border-0 h-100">
-                    <div className="card-body text-center p-4">
-                      <div className="display-4 text-success mb-3">📅</div>
-                      <h5 className="fw-bold">Leave Calendar</h5>
-                      <p className="text-muted small mb-3">
-                        Check your leave schedule and company holidays
-                      </p>
-                      <a 
-                        href="/leaves"
-                        className="btn btn-success w-100"
-                      >
-                        View Calendar
-                      </a>
-                    </div>
-                  </div>
-                </div>
-                <div className="col-md-6">
-                  <div className="card bg-light border-0 h-100">
-                    <div className="card-body text-center p-4">
-                      <div className="display-4 text-warning mb-3">👥</div>
-                      <h5 className="fw-bold">My Attendance</h5>
-                      <p className="text-muted small mb-3">
-                        Check your attendance status and records
-                      </p>
-                      <a 
-                        href="/attendance"
-                        className="btn btn-warning w-100"
-                      >
-                        Check Attendance
-                      </a>
-                    </div>
-                  </div>
-                </div>
+                ))}
               </div>
             </div>
           </div>
         </div>
 
-        {/* Quick Information */}
+        {/* Quick Info */}
         <div className="col-lg-4 mb-4">
           <div className="card border-0 shadow-sm h-100">
             <div className="card-header bg-white border-0 py-3">
               <h5 className="fw-bold mb-0 text-dark">💡 Quick Information</h5>
             </div>
             <div className="card-body">
-              {/* Attendance Status Guide */}
-              <div className="mb-4">
-                <h6 className="fw-semibold text-muted mb-3">Attendance Status:</h6>
-                <div className="d-flex flex-column gap-2">
-                  <div className="d-flex align-items-center">
-                    <span className="badge bg-success me-2">✅</span>
-                    <small className="text-muted">Present - Full day attendance</small>
+              <h6 className="fw-semibold text-muted mb-3">Attendance Status:</h6>
+              <div className="d-flex flex-column gap-2 mb-4">
+                {[
+                  { badge: "bg-success",          text: "Present — Full day attendance" },
+                  { badge: "bg-danger",            text: "Absent — No attendance recorded" },
+                  { badge: "bg-info text-dark",    text: "Leave — Approved leave day" },
+                  { badge: "bg-warning text-dark", text: "Half Day — Partial attendance" },
+                  { badge: "bg-warning text-dark", text: "Pending Punch — Incomplete" },
+                ].map((item, i) => (
+                  <div key={i} className="d-flex align-items-center">
+                    <span className={`badge ${item.badge} me-2`}>●</span>
+                    <small className="text-muted">{item.text}</small>
                   </div>
-                  <div className="d-flex align-items-center">
-                    <span className="badge bg-danger me-2">❌</span>
-                    <small className="text-muted">Absent - No attendance recorded</small>
-                  </div>
-                  <div className="d-flex align-items-center">
-                    <span className="badge bg-info me-2">🏖️</span>
-                    <small className="text-muted">Leave - Approved leave day</small>
-                  </div>
-                  <div className="d-flex align-items-center">
-                    <span className="badge bg-warning text-dark me-2">⚠️</span>
-                    <small className="text-muted">Pending Punch - Incomplete attendance</small>
-                  </div>
-                </div>
+                ))}
               </div>
 
-              {/* Leave Status Guide */}
-              <div className="mb-4">
-                <h6 className="fw-semibold text-muted mb-3">Leave Status Guide:</h6>
-                <div className="d-flex flex-column gap-2">
-                  <div className="d-flex align-items-center">
-                    <span className="badge bg-success me-2">✅</span>
-                    <small className="text-muted">Approved - Leave is confirmed</small>
-                  </div>
-                  <div className="d-flex align-items-center">
-                    <span className="badge bg-warning text-dark me-2">⏳</span>
-                    <small className="text-muted">Pending - Waiting for approval</small>
-                  </div>
-                  <div className="d-flex align-items-center">
-                    <span className="badge bg-danger me-2">❌</span>
-                    <small className="text-muted">Rejected - Leave was denied</small>
-                  </div>
-                  <div className="d-flex align-items-center">
-                    <span className="badge bg-secondary me-2">🗑️</span>
-                    <small className="text-muted">Cancelled - You cancelled the leave</small>
-                  </div>
-                </div>
-              </div>
-
-              {/* Alerts */}
               {leaveStats.pendingLeaves > 0 && (
-                <div className="alert alert-warning border-0 mb-3">
-                  <small>
-                    <strong>You have {leaveStats.pendingLeaves} pending leave(s)</strong><br/>
-                    Waiting for manager approval. You'll be notified once processed.
-                  </small>
+                <div className="alert alert-warning border-0 mb-2">
+                  <small><strong>{leaveStats.pendingLeaves} pending leave(s)</strong><br/>Waiting for manager approval.</small>
                 </div>
               )}
-
               {attendanceStats.absentDays > 0 && (
-                <div className="alert alert-danger border-0 mb-3">
-                  <small>
-                    <strong>You have {attendanceStats.absentDays} absence(s) this month</strong><br/>
-                    Regular attendance is important for performance reviews.
-                  </small>
+                <div className="alert alert-danger border-0 mb-2">
+                  <small><strong>{attendanceStats.absentDays} absence(s) this month</strong><br/>Regular attendance matters.</small>
                 </div>
               )}
-
               {attendanceStats.pendingPunches > 0 && (
-                <div className="alert alert-warning border-0 mb-3">
-                  <small>
-                    <strong>You have {attendanceStats.pendingPunches} pending punch(es)</strong><br/>
-                    Please complete your attendance for these dates.
-                  </small>
+                <div className="alert alert-warning border-0 mb-2">
+                  <small><strong>{attendanceStats.pendingPunches} pending punch(es)</strong><br/>Please complete your attendance.</small>
                 </div>
               )}
-
               {calculateAttendanceRate() >= 90 && (
-                <div className="alert alert-success border-0 mb-3">
-                  <small>
-                    <strong>Great attendance! 🎉</strong><br/>
-                    Your attendance rate is {calculateAttendanceRate()}% this month.
-                  </small>
+                <div className="alert alert-success border-0 mb-2">
+                  <small><strong>Great attendance! 🎉</strong><br/>Your rate is {calculateAttendanceRate()}% this month.</small>
                 </div>
               )}
 
-              {/* Help Section */}
-              <div className="border-top pt-3">
+              <div className="border-top pt-3 mt-2">
                 <h6 className="fw-semibold text-muted mb-2">🆘 Need Help?</h6>
                 <ul className="list-unstyled small text-muted">
                   <li className="mb-1">• Contact HR for leave policy questions</li>
-                  <li className="mb-1">• Reach out to your manager for urgent leaves</li>
+                  <li className="mb-1">• Reach out to manager for urgent leaves</li>
                   <li className="mb-1">• Check calendar for holidays</li>
                   <li>• System issues? Contact IT support</li>
                 </ul>
@@ -726,6 +465,7 @@ export default function EmployeeDashboard() {
           </div>
         </div>
       </div>
+
     </div>
   );
 }

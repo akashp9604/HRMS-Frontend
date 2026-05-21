@@ -1,8 +1,11 @@
 import React, { useState, useEffect, useContext } from "react";
+import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 
 export default function Profile() {
+  const navigate = useNavigate();
   const { user } = useContext(AuthContext);
+
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -139,13 +142,11 @@ export default function Profile() {
     const file = e.target.files[0];
     if (!file) return;
 
-    // Validate file type
     if (!file.type.startsWith('image/')) {
       setUpdateMessage("Error: Please select a valid image file");
       return;
     }
 
-    // Validate file size (5MB limit)
     if (file.size > 5 * 1024 * 1024) {
       setUpdateMessage("Error: Image size should be less than 5MB");
       return;
@@ -183,7 +184,6 @@ export default function Profile() {
       const result = await response.text();
       setUpdateMessage("Profile image uploaded successfully!");
       
-      // Refresh profile to get updated image path
       await fetchProfile();
       
       setTimeout(() => {
@@ -195,7 +195,6 @@ export default function Profile() {
       console.error("Error uploading image:", err);
     } finally {
       setImageUploading(false);
-      // Clear file input
       e.target.value = '';
     }
   };
@@ -205,11 +204,9 @@ export default function Profile() {
       return null;
     }
     
-    // If it's a full URL or relative path, construct the full URL
     if (profile.profileImage.startsWith('http')) {
       return profile.profileImage;
     } else {
-      // For local file paths, create a URL to fetch the image
       return `http://localhost:8088/api/employees/profile/image/${profile.id}`;
     }
   };
@@ -218,7 +215,6 @@ export default function Profile() {
     setImageError(true);
   };
 
-  // Loading state
   if (loading) {
     return (
       <div className="d-flex justify-content-center align-items-center" style={{ height: "50vh" }}>
@@ -232,7 +228,6 @@ export default function Profile() {
     );
   }
 
-  // Error state
   if (error) {
     return (
       <div className="container mt-4">
@@ -254,7 +249,6 @@ export default function Profile() {
     <div className="container mt-4">
       <div className="row justify-content-center">
         <div className="col-md-8 col-lg-6">
-          {/* Profile Header */}
           <div className="d-flex justify-content-between align-items-center mb-4">
             <h2 className="text-primary">Employee Profile</h2>
             <div>
@@ -277,7 +271,6 @@ export default function Profile() {
             </div>
           </div>
 
-          {/* Update Message */}
           {updateMessage && (
             <div className={`alert ${updateMessage.includes("Error") ? 'alert-danger' : 'alert-success'} alert-dismissible fade show`}>
               {updateMessage}
@@ -289,13 +282,10 @@ export default function Profile() {
             </div>
           )}
 
-          {/* Profile Card */}
           <div className="card shadow-sm">
             <div className="card-body">
-              {/* Profile Image Section - Only ONE circle */}
               <div className="text-center mb-4">
                 <div className="position-relative d-inline-block">
-                  {/* Only show ONE element - either image or avatar */}
                   {!showAvatar ? (
                     <img 
                       src={profileImageUrl}
@@ -322,7 +312,6 @@ export default function Profile() {
                     </div>
                   )}
                   
-                  {/* Image Upload Button */}
                   <div className="mt-3">
                     <input
                       type="file"
@@ -353,7 +342,6 @@ export default function Profile() {
               </div>
 
               {isEditing ? (
-                // Edit Form
                 <form onSubmit={handleSubmit}>
                   <div className="mb-4">
                     <h5 className="card-title text-secondary border-bottom pb-2">
@@ -472,9 +460,7 @@ export default function Profile() {
                   </div>
                 </form>
               ) : (
-                // View Mode
                 <>
-                  {/* Personal Information Section */}
                   <div className="mb-4">
                     <h5 className="card-title text-secondary border-bottom pb-2">
                       Personal Information
@@ -507,7 +493,6 @@ export default function Profile() {
                     </div>
                   </div>
 
-                  {/* Professional Information Section */}
                   <div className="mb-4">
                     <h5 className="card-title text-secondary border-bottom pb-2">
                       Professional Information
@@ -524,7 +509,6 @@ export default function Profile() {
                     </div>
                   </div>
 
-                  {/* Current Session Info */}
                   <div>
                     <h5 className="card-title text-secondary border-bottom pb-2">
                       Current Session
@@ -554,7 +538,6 @@ export default function Profile() {
             </div>
           </div>
 
-          {/* Last Updated Info */}
           {!isEditing && (
             <div className="mt-3 text-end">
               <small className="text-muted">
