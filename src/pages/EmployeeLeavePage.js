@@ -31,6 +31,7 @@ const EmployeeLeavePage = () => {
     // medicalCertificate: null,  // for medical leave
     // medicalCertificateName: ""
   });
+  const [medicalDocument, setMedicalDocument] = useState(null);
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
   const [editingLeave, setEditingLeave] = useState(null);
@@ -135,8 +136,12 @@ const EmployeeLeavePage = () => {
       // medicalCertificateName: ""    
 
     });
+<<<<<<< Updated upstream
     // setMedicalFile(null);           //  Reset file
     // setMedicalFileName("");         //  Reset file name
+=======
+    setMedicalDocument(null);
+>>>>>>> Stashed changes
     setErrorMsg("");
   };
 
@@ -598,9 +603,15 @@ const EmployeeLeavePage = () => {
       reason: newLeave.reason,
     };
 
+<<<<<<< Updated upstream
     //  Add employeeId only for new leave (not for edit)
     if (!isEditMode) {
       leaveData.employeeId = currentEmployeeId;
+=======
+    if (newLeave.leaveType === "SICK" && !medicalDocument) {
+      setErrorMsg("❌ Please upload a medical document for sick leave.");
+      return;
+>>>>>>> Stashed changes
     }
 
     console.log("📤 Sending leave request:", leaveData);
@@ -616,7 +627,42 @@ const EmployeeLeavePage = () => {
       const { username, password } = authUser;
       const basicAuth = "Basic " + btoa(`${username}:${password}`);
 
+<<<<<<< Updated upstream
   let response;
+=======
+      let response;
+      if (newLeave.leaveType === "SICK") {
+        const formData = new FormData();
+        formData.append(
+          "leaveData",
+          new Blob([JSON.stringify(leaveData)], { type: "application/json" })
+        );
+        formData.append("document", medicalDocument);
+
+        response = await axios.post(
+          "http://localhost:8087/api/leaves/apply",
+          formData,
+          {
+            headers: {
+              Authorization: basicAuth,
+            },
+          }
+        );
+      } else {
+        response = await axios.post(
+          "http://localhost:8087/api/leaves/apply",
+          leaveData,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: basicAuth,
+            },
+          }
+        );
+      }
+
+      console.log("✅ Leave apply response:", response.data);
+>>>>>>> Stashed changes
       
       if (isEditMode) {
         // EDIT MODE: Send PUT request to update existing leave
@@ -926,7 +972,15 @@ const tileClassName = ({ date, view }) => {
       setErrorMsg(""); // Clear error if valid date selected
     } else {
       setNewLeave({ ...newLeave, [name]: value });
+      if (name === "leaveType" && value !== "SICK") {
+        setMedicalDocument(null);
+      }
     }
+  };
+
+  const handleMedicalDocumentChange = (e) => {
+    const file = e.target.files && e.target.files[0] ? e.target.files[0] : null;
+    setMedicalDocument(file);
   };
 
   // NEW: Calculate leave duration
@@ -1808,6 +1862,24 @@ const tileClassName = ({ date, view }) => {
                         Provide clear details to help with the approval process
                       </div>
                     </div>
+                    {newLeave.leaveType === "SICK" && (
+                      <div className="col-md-6 mb-4">
+                        <label className="form-label fw-semibold text-dark">
+                          <i className="bi bi-file-earmark-arrow-up me-2 text-primary"></i>
+                          Upload Medical Document
+                        </label>
+                        <input
+                          type="file"
+                          className="form-control form-control-lg"
+                          accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                          onChange={handleMedicalDocumentChange}
+                          required={newLeave.leaveType === "SICK"}
+                        />
+                        <div className="form-text">
+                          Required for sick leave applications.
+                        </div>
+                      </div>
+                    )}
                   </div>
                   <div className="d-flex gap-3 justify-content-end border-top pt-4">
                     <button
