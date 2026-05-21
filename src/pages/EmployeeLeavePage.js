@@ -28,6 +28,8 @@ const EmployeeLeavePage = () => {
     startDate: "",
     endDate: "",
     reason: "",
+    // medicalCertificate: null,  // for medical leave
+    // medicalCertificateName: ""
   });
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
@@ -62,6 +64,10 @@ const EmployeeLeavePage = () => {
   // 🟢 NEW: Success popup state
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [successPopupData, setSuccessPopupData] = useState(null);
+
+//  NEW STATE FOR MEDICAL FILE
+// const [medicalFile, setMedicalFile] = useState(null);
+// const [medicalFileName, setMedicalFileName] = useState("");
 
   // Auto-hide messages after 5 seconds
   useEffect(() => {
@@ -125,7 +131,12 @@ const EmployeeLeavePage = () => {
       startDate: "",
       endDate: "",
       reason: "",
+      // medicalCertificate: null,     
+      // medicalCertificateName: ""    
+
     });
+    // setMedicalFile(null);           //  Reset file
+    // setMedicalFileName("");         //  Reset file name
     setErrorMsg("");
   };
 
@@ -542,11 +553,20 @@ const EmployeeLeavePage = () => {
     e.preventDefault();
     setErrorMsg("");
     setSuccessMsg("");
+    const isEditMode = editingLeave !== null;
 
     if (!currentEmployeeId) {
       setErrorMsg("❌ Employee ID is not available. Please refresh the page.");
       return;
     }
+    
+  //   // Validate medical certificate for SICK leave
+  // if (newLeave.leaveType === "SICK") {
+  //   if (!medicalFile) {
+  //     setErrorMsg("❌ Medical certificate is required for sick leave. Please upload a document.");
+  //     return;
+  //   }
+  // }
 
     // Validate dates before submission - STRICTER VALIDATION
     const validation = validateLeaveDates(newLeave.startDate, newLeave.endDate);
@@ -571,12 +591,17 @@ const EmployeeLeavePage = () => {
     };
 
     const leaveData = {
-      employeeId: currentEmployeeId,
+      //employeeId: currentEmployeeId,
       leaveType: newLeave.leaveType,
       startDate: formatDate(newLeave.startDate),
       endDate: formatDate(newLeave.endDate),
       reason: newLeave.reason,
     };
+
+    //  Add employeeId only for new leave (not for edit)
+    if (!isEditMode) {
+      leaveData.employeeId = currentEmployeeId;
+    }
 
     console.log("📤 Sending leave request:", leaveData);
 
@@ -591,23 +616,38 @@ const EmployeeLeavePage = () => {
       const { username, password } = authUser;
       const basicAuth = "Basic " + btoa(`${username}:${password}`);
 
-      const response = await axios.post(
-        "http://localhost:8087/api/leaves/apply",
-        leaveData,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: basicAuth,
-          },
-        }
-      );
-
-      console.log("✅ Leave apply response:", response.data);
+  let response;
       
-      // 🟢 UPDATED: Show success popup instead of just message
-      showLeaveSuccessPopup(leaveData);
-      setSuccessMsg("✅ Leave application submitted successfully!");
-
+      if (isEditMode) {
+        // EDIT MODE: Send PUT request to update existing leave
+        response = await axios.put(
+          `http://localhost:8087/api/leaves/edit/${editingLeave.id}`,
+          leaveData,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: basicAuth,
+            },
+          }
+        );
+        console.log("✅ Leave updated successfully:", response.data);
+        setSuccessMsg("✅ Leave request updated successfully!");
+      } else {
+        // NEW LEAVE MODE: Send POST request to create new leave
+        response = await axios.post(
+          "http://localhost:8087/api/leaves/apply",
+          leaveData,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: basicAuth,
+            },
+          }
+        );
+        console.log("✅ Leave apply response:", response.data);
+        showLeaveSuccessPopup(leaveData);
+        setSuccessMsg("✅ Leave application submitted successfully!");
+      }
       // Reset form and close modal
       closeApplyLeaveModal();
       fetchData();
@@ -846,6 +886,34 @@ const tileClassName = ({ date, view }) => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+
+  //   //  Handle file input
+  // if (name === "medicalCertificate" && files && files[0]) {
+  //   const file = files[0];
+    
+  //   // Validate file type
+  //   const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
+  //   if (!allowedTypes.includes(file.type)) {
+  //     setErrorMsg("❌ Please upload JPEG, PNG, or PDF file only");
+  //     return;
+  //   }
+    
+  //   // Validate file size (max 2MB)
+  //   if (file.size > 2 * 1024 * 1024) {
+  //     setErrorMsg("❌ File size should be less than 2MB");
+  //     return;
+  //   }
+    
+  //   setMedicalFile(file);
+  //   setMedicalFileName(file.name);
+  //   setNewLeave({ 
+  //     ...newLeave, 
+  //     medicalCertificate: file,
+  //     medicalCertificateName: file.name 
+  //   });
+  //   setErrorMsg("");
+  //   return;
+  // }
     
     // STRICTER VALIDATION: Don't allow weekend selection at all
     if (name === "startDate" || name === "endDate") {
@@ -2116,6 +2184,10 @@ const tileClassName = ({ date, view }) => {
 
     .react-calendar__month-view__days{
     /* gap: 5px !important;*/
+      display: flex !important;
+      flex-wrap: wrap !important;
+      /*gap: 6px !important;*/
+      
     }
     
     /* ==================== */
