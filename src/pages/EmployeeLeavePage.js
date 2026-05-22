@@ -1013,7 +1013,7 @@ const EmployeeLeavePage = () => {
         </div>
       )}
 
-      {/* Header */}
+      {/* Header
       <div className="row mb-4">
         <div className="col-12">
           <div className="d-flex justify-content-between align-items-start">
@@ -1033,8 +1033,85 @@ const EmployeeLeavePage = () => {
             </div>
           </div>
         </div>
-      </div>
+      </div> */}
 
+{/* Header */}
+<div className="row mb-4">
+  <div className="col-12">
+    <div className="d-flex justify-content-between align-items-start">
+      <div>
+        <h1 className="fw-bold mb-2 text-primary">Leave Management System</h1>
+        <p className="text-muted mb-0">
+          Welcome back, <strong>{employeeName || 'Employee'}</strong>! Manage your leaves and track attendance.
+        </p>
+      </div>
+      <div className="text-end">
+        {/* Human Symbol / Profile Dropdown */}
+        <div className="dropdown">
+          <button 
+            className="btn btn-light border rounded-circle p-2 d-flex align-items-center justify-content-center"
+            type="button"
+            data-bs-toggle="dropdown"
+            aria-expanded="false"
+            style={{ width: '50px', height: '50px' }}
+          >
+            <i className="bi bi-person-circle fs-2"></i>
+          </button>
+          <ul className="dropdown-menu dropdown-menu-end shadow" style={{ minWidth: '250px' }}>
+            <li>
+              <div className="dropdown-item-text">
+                <div className="d-flex align-items-center">
+                  <i className="bi bi-person-circle fs-3 me-2"></i>
+                  <div>
+                    <strong>{employeeName || 'Employee'}</strong>
+                    <br />
+                    <small className="text-muted">
+                      <strong>Employee ID:</strong> {currentEmployeeId}
+                      {!employeeId && <span className="text-warning"> (Default ID)</span>}
+                    </small>
+                  </div>
+                </div>
+              </div>
+            </li>
+            <li><hr className="dropdown-divider" /></li>
+            <li>
+              <button className="dropdown-item" onClick={() => window.location.href = '/profile'}>
+                <i className="bi bi-person me-2"></i> My Profile
+              </button>
+            </li>
+            <li>
+              <button className="dropdown-item" onClick={() => window.location.href = '/dashboard'}>
+                <i className="bi bi-speedometer2 me-2"></i> Dashboard
+              </button>
+            </li>
+            <li>
+              <button className="dropdown-item" onClick={() => window.location.href = '/login'}>
+                <i className="bi bi-box-arrow-in-right me-2"></i> Login
+              </button>
+            </li>
+            <li><hr className="dropdown-divider" /></li>
+            <li>
+              <button className="dropdown-item text-danger" onClick={() => {
+                localStorage.clear();
+                window.location.href = '/login';
+              }}>
+                <i className="bi bi-box-arrow-right me-2"></i> Logout
+              </button>
+            </li>
+          </ul>
+        </div>
+        
+        {/* Optional: Display employee name below icon */}
+        <div className="mt-2">
+          <small className="text-muted">
+            <i className="bi bi-person-badge me-1"></i>
+            {employeeName || 'Employee'}
+          </small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
       {/* REMOVED: Dashboard Stats Section */}
 
       {/* Navigation Tabs */}
