@@ -5,13 +5,13 @@ import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 
 const EmployeeLeavePage = () => {
-  // ðŸŸ¢ NEW: Get logged-in employee info from localStorage
+  // 🟢 NEW: Get logged-in employee info from localStorage
   const employee = JSON.parse(localStorage.getItem("employee"));
   const employeeId = employee?.employeeId;
   const employeeName = employee?.employeeName;
  
-  // ðŸ” ADDED DEBUGGING
-  console.log("ðŸ”„ DEBUG: Component loaded - Employee data from localStorage:");
+  // 🔍 ADDED DEBUGGING
+  console.log("🔄 DEBUG: Component loaded - Employee data from localStorage:");
   console.log("  - Full employee object:", employee);
   console.log("  - Employee ID:", employeeId);
   console.log("  - Employee Name:", employeeName);
@@ -62,7 +62,7 @@ const EmployeeLeavePage = () => {
   const [hoveredDateInfo, setHoveredDateInfo] = useState(null);
   const [attendanceData, setAttendanceData] = useState({});
 
-  // ðŸŸ¢ NEW: Success popup state
+  // 🟢 NEW: Success popup state
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [successPopupData, setSuccessPopupData] = useState(null);
 
@@ -81,7 +81,7 @@ const EmployeeLeavePage = () => {
     }
   }, [successMsg, errorMsg]);
 
-  // ðŸŸ¢ NEW: Auto-hide success popup after 5 seconds
+  // 🟢 NEW: Auto-hide success popup after 5 seconds
   useEffect(() => {
     if (showSuccessPopup) {
       const timer = setTimeout(() => {
@@ -95,13 +95,13 @@ const EmployeeLeavePage = () => {
   // Initialize employeeId from props or localStorage
   useEffect(() => {
     const id = employeeId || localStorage.getItem('employeeId') || '20250304-O-L-53';
-    console.log("ðŸ†” Setting employee ID:", id);
+    console.log("🆔 Setting employee ID:", id);
     setCurrentEmployeeId(id);
   }, [employeeId]);
 
   useEffect(() => {
     if (currentEmployeeId) {
-      console.log("ðŸ”„ Fetching data for employee:", currentEmployeeId);
+      console.log("🔄 Fetching data for employee:", currentEmployeeId);
       fetchData();
     }
   }, [currentEmployeeId]);
@@ -136,11 +136,11 @@ const EmployeeLeavePage = () => {
       // medicalCertificateName: ""    
 
     });
-    setMedicalDocument(null);
+ setMedicalDocument(null);
     setErrorMsg("");
   };
 
-  // ðŸŸ¢ NEW: Show success popup
+  // 🟢 NEW: Show success popup
   const showLeaveSuccessPopup = (leaveData) => {
     setSuccessPopupData({
       leaveType: getLeaveTypeDisplay(leaveData.leaveType),
@@ -157,7 +157,7 @@ const EmployeeLeavePage = () => {
     setShowSuccessPopup(true);
   };
 
-  // ðŸŸ¢ NEW: Close success popup manually
+  // 🟢 NEW: Close success popup manually
   const closeSuccessPopup = () => {
     setShowSuccessPopup(false);
     setSuccessPopupData(null);
@@ -192,7 +192,7 @@ const EmployeeLeavePage = () => {
     if (isWeekend(start)) {
       return {
         isValid: false,
-        message: "âŒ Start date cannot be a weekend. Please select a weekday."
+        message: "❌ Start date cannot be a weekend. Please select a weekday."
       };
     }
     
@@ -200,7 +200,7 @@ const EmployeeLeavePage = () => {
     if (isWeekend(end)) {
       return {
         isValid: false,
-        message: "âŒ End date cannot be a weekend. Please select a weekday."
+        message: "❌ End date cannot be a weekend. Please select a weekday."
       };
     }
     
@@ -208,7 +208,7 @@ const EmployeeLeavePage = () => {
     if (start > end) {
       return {
         isValid: false,
-        message: "âŒ End date cannot be before start date."
+        message: "❌ End date cannot be before start date."
       };
     }
     
@@ -259,7 +259,7 @@ const EmployeeLeavePage = () => {
     return processedLeaves;
   };
 
-  // âœ… UPDATED: Fetch attendance data for a specific date using the correct API
+  // ✅ UPDATED: Fetch attendance data for a specific date using the correct API
   const fetchAttendanceForDate = async (date, employeeId) => {
     try {
       const dateStr = date.toISOString().split('T')[0];
@@ -269,9 +269,9 @@ const EmployeeLeavePage = () => {
         return attendanceData[dateStr];
       }
 
-      console.log("ðŸ” Fetching attendance for date:", { employeeId, date: dateStr });
+      console.log("🔍 Fetching attendance for date:", { employeeId, date: dateStr });
 
-      // âœ… CORRECTED: Use the proper API endpoint
+      // ✅ CORRECTED: Use the proper API endpoint
       const response = await axios.get(
         `http://localhost:8085/api/attendance/employee/${employeeId}/daily`,
         {
@@ -281,7 +281,7 @@ const EmployeeLeavePage = () => {
         }
       );
       
-      console.log("âœ… Attendance API Response:", response.data);
+      console.log("✅ Attendance API Response:", response.data);
       
       // Cache the attendance data
       setAttendanceData(prev => ({
@@ -291,7 +291,7 @@ const EmployeeLeavePage = () => {
       
       return response.data;
     } catch (error) {
-      console.error("âŒ Error fetching attendance for date:", error);
+      console.error("❌ Error fetching attendance for date:", error);
       if (error.response) {
         console.error("Error details:", {
           status: error.response.status,
@@ -302,7 +302,7 @@ const EmployeeLeavePage = () => {
     }
   };
 
-  // âœ… UPDATED: Handle date hover in calendar with proper attendance display
+  // ✅ UPDATED: Handle date hover in calendar with proper attendance display
   const handleDateHover = async (date) => {
     setHoveredDate(date);
     
@@ -334,7 +334,7 @@ const EmployeeLeavePage = () => {
     const holiday = holidays.find(h => h === dateISO);
     if (holiday) {
       info.type = 'holiday';
-      info.message = 'Public Holiday ðŸŽ‰';
+      info.message = 'Public Holiday 🎉';
       setHoveredDateInfo(info);
       return;
     }
@@ -363,30 +363,30 @@ const EmployeeLeavePage = () => {
         info.type = 'attendance';
         info.attendance = attendance;
         
-        // âœ… IMPROVED: Show comprehensive attendance information
+        // ✅ IMPROVED: Show comprehensive attendance information
         if (attendance.status === 'PRESENT') {
           if (attendance.outTime) {
-            info.message = `âœ… Present | In: ${formatTime(attendance.inTime)} | Out: ${formatTime(attendance.outTime)}`;
+            info.message = `✅ Present | In: ${formatTime(attendance.inTime)} | Out: ${formatTime(attendance.outTime)}`;
           } else if (attendance.inTime) {
-            info.message = `âœ… Present | In: ${formatTime(attendance.inTime)} | Still working...`;
+            info.message = `✅ Present | In: ${formatTime(attendance.inTime)} | Still working...`;
           } else {
-            info.message = 'âœ… Present (No time recorded)';
+            info.message = '✅ Present (No time recorded)';
           }
         } else if (attendance.status === 'ABSENT') {
           info.type = 'absent';
-          info.message = 'âŒ Absent';
+          info.message = '❌ Absent';
         } else if (attendance.status === 'LATE') {
-          info.message = `â° Late | In: ${formatTime(attendance.inTime)}`;
+          info.message = `⏰ Late | In: ${formatTime(attendance.inTime)}`;
           if (attendance.outTime) {
             info.message += ` | Out: ${formatTime(attendance.outTime)}`;
           }
         } else if (attendance.status === 'HALF_DAY') {
-          info.message = `ðŸ• Half Day | In: ${formatTime(attendance.inTime)}`;
+          info.message = `🕐 Half Day | In: ${formatTime(attendance.inTime)}`;
           if (attendance.outTime) {
             info.message += ` | Out: ${formatTime(attendance.outTime)}`;
           }
         } else {
-          info.message = `ðŸ“Š ${attendance.status || 'No attendance record'}`;
+          info.message = `📊 ${attendance.status || 'No attendance record'}`;
         }
 
         // Add work hours if available
@@ -398,11 +398,11 @@ const EmployeeLeavePage = () => {
         // No attendance record found
         if (date < new Date().setHours(0,0,0,0)) {
           info.type = 'absent';
-          info.message = 'âŒ Absent (No record)';
+          info.message = '❌ Absent (No record)';
         } else if (dateStr === today) {
-          info.message = 'ðŸ“Š No attendance recorded today yet';
+          info.message = '📊 No attendance recorded today yet';
         } else {
-          info.message = 'ðŸ“Š No attendance data available';
+          info.message = '📊 No attendance data available';
         }
       }
     }
@@ -418,13 +418,13 @@ const EmployeeLeavePage = () => {
 
   const fetchData = async () => {
     if (!currentEmployeeId) {
-      console.error("âŒ No employee ID available");
+      console.error("❌ No employee ID available");
       return;
     }
 
     setLoading(true);
     try {
-      console.log("ðŸ“Š Starting data fetch for employee:", currentEmployeeId);
+      console.log("📊 Starting data fetch for employee:", currentEmployeeId);
       
       // Fetch other data
       const [balanceRes, leavesRes, holidaysRes] = await Promise.all([
@@ -438,9 +438,9 @@ const EmployeeLeavePage = () => {
         }),
       ]);
 
-      console.log("âœ… Leave Balance:", balanceRes.data);
-      console.log("âœ… Leaves:", leavesRes.data);
-      console.log("âœ… Holidays:", holidaysRes.data);
+      console.log("✅ Leave Balance:", balanceRes.data);
+      console.log("✅ Leaves:", leavesRes.data);
+      console.log("✅ Holidays:", holidaysRes.data);
 
       setLeaveBalance(balanceRes.data);
       
@@ -453,7 +453,7 @@ const EmployeeLeavePage = () => {
       // NEW: Fetch initial paid leave usage
       await fetchPaidLeaveUsage();
     } catch (err) {
-      console.error("âŒ Error fetching data:", err);
+      console.error("❌ Error fetching data:", err);
       setErrorMsg("Failed to load data. Please refresh the page.");
     } finally {
       setLoading(false);
@@ -471,36 +471,36 @@ const EmployeeLeavePage = () => {
       );
       setPaidLeaveUsage(response.data);
     } catch (err) {
-      console.error("âŒ Error fetching paid leave usage:", err);
+      console.error("❌ Error fetching paid leave usage:", err);
     }
   };
 
   // NEW: Fetch employee's leave requests specifically for "My Requests" tab
   const fetchMyLeaveRequests = async () => {
     if (!currentEmployeeId) {
-      console.error("âŒ No employee ID available for fetching leave requests");
+      console.error("❌ No employee ID available for fetching leave requests");
       return;
     }
 
     try {
-      console.log("ðŸ” Fetching leave requests for employee:", currentEmployeeId);
+      console.log("🔍 Fetching leave requests for employee:", currentEmployeeId);
       
       const response = await axios.get(`http://localhost:8087/api/leaves/employee/${currentEmployeeId}`);
       
-      console.log("âœ… API Response:", response);
-      console.log("âœ… Response Data:", response.data);
+      console.log("✅ API Response:", response);
+      console.log("✅ Response Data:", response.data);
 
       if (response.data && Array.isArray(response.data)) {
         // Process leaves to get manager names
         const processedLeaves = await processLeavesWithManagerNames(response.data);
         setLeaves(processedLeaves);
-        console.log(`âœ… Loaded ${response.data.length} leave requests`);
+        console.log(`✅ Loaded ${response.data.length} leave requests`);
       } else {
-        console.error("âŒ Invalid response format");
+        console.error("❌ Invalid response format");
         setLeaves([]);
       }
     } catch (err) {
-      console.error("âŒ Error fetching my leave requests:", err);
+      console.error("❌ Error fetching my leave requests:", err);
       setErrorMsg("Failed to load your leave requests. Please try again.");
       setLeaves([]);
     }
@@ -514,12 +514,12 @@ const EmployeeLeavePage = () => {
     }
 
     try {
-      console.log("ðŸ—‘ï¸ Cancelling leave:", leaveId);
+      console.log("🗑️ Cancelling leave:", leaveId);
       
       const response = await axios.put(`http://localhost:8087/api/leaves/cancel/${leaveId}`);
       
-      console.log("âœ… Leave cancelled successfully:", response.data);
-      setSuccessMsg("âœ… Leave request cancelled successfully!");
+      console.log("✅ Leave cancelled successfully:", response.data);
+      setSuccessMsg("✅ Leave request cancelled successfully!");
       
       // Refresh the data
       fetchMyLeaveRequests();
@@ -529,14 +529,14 @@ const EmployeeLeavePage = () => {
       setShowCancelModal(false);
       setCancellingLeave(null);
     } catch (err) {
-      console.error("âŒ Error cancelling leave:", err);
-      setErrorMsg(err.response?.data || "âŒ Failed to cancel leave request. Please try again.");
+      console.error("❌ Error cancelling leave:", err);
+      setErrorMsg(err.response?.data || "❌ Failed to cancel leave request. Please try again.");
     }
   };
 
   // NEW: Edit leave request
   const handleEditLeave = (leave) => {
-    console.log("âœï¸ Editing leave:", leave);
+    console.log("✏️ Editing leave:", leave);
     
     // Set the form to edit mode
     setEditingLeave(leave);
@@ -549,95 +549,110 @@ const EmployeeLeavePage = () => {
     setShowApplyModal(true);
   };
 
-  const handleSubmitLeave = async (e) => {
-    e.preventDefault();
-    setErrorMsg("");
-    setSuccessMsg("");
-    const isEditMode = editingLeave !== null;
+const handleSubmitLeave = async (e) => {
+  e.preventDefault();
+  setErrorMsg("");
+  setSuccessMsg("");
+  const isEditMode = editingLeave !== null;
 
-    if (!currentEmployeeId) {
-      setErrorMsg("âŒ Employee ID is not available. Please refresh the page.");
+  if (!currentEmployeeId) {
+    setErrorMsg("❌ Employee ID is not available. Please refresh the page.");
+    return;
+  }
+
+  // Validate dates before submission
+  const validation = validateLeaveDates(newLeave.startDate, newLeave.endDate);
+  if (!validation.isValid) {
+    setErrorMsg(validation.message);
+    return;
+  }
+
+  // Additional check: explicitly prevent weekend leaves
+  const start = new Date(newLeave.startDate);
+  const end = new Date(newLeave.endDate);
+  if (isWeekend(start) || isWeekend(end)) {
+    setErrorMsg("❌ Leave applications are not allowed for weekends. Please select weekdays only.");
+    return;
+  }
+
+  // Format dates to YYYY-MM-DD
+  const formatDate = (dateStr) => {
+    const d = new Date(dateStr);
+    return d.toISOString().split("T")[0];
+  };
+
+  // 🔧 FIX: Build the leaveData object as expected by backend (@RequestPart("leaveData"))
+  const leaveData = {
+    leaveType: newLeave.leaveType,
+    startDate: formatDate(newLeave.startDate),
+    endDate: formatDate(newLeave.endDate),
+    reason: newLeave.reason,
+  };
+
+  // Add employeeId only for new leave (not for edit)
+  if (!isEditMode) {
+    leaveData.employeeId = currentEmployeeId;
+  }
+
+  // 🔧 FIX: Validate file presence for sick leave (unchanged logic)
+  if (!isEditMode && newLeave.leaveType === "SICK" && !medicalDocument) {
+    setErrorMsg("❌ Please upload a medical document for sick leave.");
+    return;
+  }
+
+  console.log("📤 Sending leave request:", leaveData);
+
+  try {
+    const authUser = JSON.parse(localStorage.getItem("authUser"));
+    if (!authUser) {
+      setErrorMsg("⚠️ Login info not found. Please login again.");
       return;
     }
-    
-  //   // Validate medical certificate for SICK leave
-  // if (newLeave.leaveType === "SICK") {
-  //   if (!medicalFile) {
-  //     setErrorMsg("âŒ Medical certificate is required for sick leave. Please upload a document.");
-  //     return;
-  //   }
-  // }
 
-    // Validate dates before submission - STRICTER VALIDATION
-    const validation = validateLeaveDates(newLeave.startDate, newLeave.endDate);
-    if (!validation.isValid) {
-      setErrorMsg(validation.message);
-      return;
-    }
+    const { username, password } = authUser;
+    const basicAuth = "Basic " + btoa(`${username}:${password}`);
 
-    // Additional check: explicitly prevent weekend leaves
-    const start = new Date(newLeave.startDate);
-    const end = new Date(newLeave.endDate);
-    
-    if (isWeekend(start) || isWeekend(end)) {
-      setErrorMsg("âŒ Leave applications are not allowed for weekends. Please select weekdays only.");
-      return;
-    }
+    let response;
 
-    // Format dates to YYYY-MM-DD
-    const formatDate = (dateStr) => {
-      const d = new Date(dateStr);
-      return d.toISOString().split("T")[0];
-    };
+    // 🔧 FIX: Edit mode stays JSON (your backend likely expects JSON for edits)
+    if (isEditMode) {
+      response = await axios.put(
+        `http://localhost:8087/api/leaves/edit/${editingLeave.id}`,
+        leaveData,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: basicAuth,
+          },
+        }
+      );
+      console.log("✅ Leave request updated successfully!");
+    } 
+    // 🔧 FIX: New leave – decide whether to send FormData (sick with file) or JSON (others)
+    else {
+      // Check if this is a sick leave WITH a file
+      const isSickWithFile = newLeave.leaveType === "SICK" && medicalDocument;
 
-    const leaveData = {
-      //employeeId: currentEmployeeId,
-      leaveType: newLeave.leaveType,
-      startDate: formatDate(newLeave.startDate),
-      endDate: formatDate(newLeave.endDate),
-      reason: newLeave.reason,
-    };
+      if (isSickWithFile) {
+        // 🔧 FIX: Use FormData for sick leave with medical document
+        const formData = new FormData();
+        // Send leaveData as a JSON blob (must be a string)
+        formData.append("leaveData", new Blob([JSON.stringify(leaveData)], { type: "application/json" }));
+        // 🔧 FIX: Append file with name "document" (backend expects @RequestPart("document"))
+        formData.append("document", medicalDocument);
 
-    //  Add employeeId only for new leave (not for edit)
-    if (!isEditMode) {
-      leaveData.employeeId = currentEmployeeId;
-    }
-    if (!isEditMode && newLeave.leaveType === "SICK" && !medicalDocument) {
-      setErrorMsg("❌ Please upload a medical document for sick leave.");
-      return;
-    }
-
-    console.log("ðŸ“¤ Sending leave request:", leaveData);
-
-    try {
-      // Get Basic Auth from localStorage
-      const authUser = JSON.parse(localStorage.getItem("authUser"));
-      if (!authUser) {
-        setErrorMsg("âš ï¸ Login info not found. Please login again.");
-        return;
-      }
-
-      const { username, password } = authUser;
-      const basicAuth = "Basic " + btoa(`${username}:${password}`);
-
-      let response;
-      
-      if (isEditMode) {
-        // EDIT MODE: Send PUT request to update existing leave
-        response = await axios.put(
-          `http://localhost:8087/api/leaves/edit/${editingLeave.id}`,
-          leaveData,
+        response = await axios.post(
+          "http://localhost:8087/api/leaves/apply",
+          formData,
           {
             headers: {
-              "Content-Type": "application/json",
               Authorization: basicAuth,
+              // 🔧 FIX: Do NOT set Content-Type – browser will set it with the correct boundary
             },
           }
         );
-        console.log("âœ… Leave updated successfully:", response.data);
-        setSuccessMsg("âœ… Leave request updated successfully!");
       } else {
-        // NEW LEAVE MODE: Send POST request to create new leave
+        // 🔧 FIX: For leaves without a file (Paid, Casual, Unpaid, WFH, or sick without file – though validation prevents sick without file)
         response = await axios.post(
           "http://localhost:8087/api/leaves/apply",
           leaveData,
@@ -648,24 +663,24 @@ const EmployeeLeavePage = () => {
             },
           }
         );
-        console.log("âœ… Leave apply response:", response.data);
-        showLeaveSuccessPopup(leaveData);
-        setSuccessMsg("âœ… Leave application submitted successfully!");
       }
-      // Reset form and close modal
-      closeApplyLeaveModal();
-      fetchData();
-      fetchMyLeaveRequests();
 
-    } catch (err) {
-      console.error("âŒ Error submitting leave:", err);
-      const errorMessage =
-        err.response?.data ||
-        err.message ||
-        "âŒ Failed to submit leave request. Please try again.";
-      setErrorMsg(errorMessage);
+      console.log("✅ Leave apply response:", response.data);
+      showLeaveSuccessPopup(leaveData);
+      setSuccessMsg("✅ Leave application submitted successfully!");
     }
-  };
+
+    // Reset form and close modal
+    closeApplyLeaveModal();
+    fetchData();
+    fetchMyLeaveRequests();
+
+  } catch (err) {
+    console.error("❌ Error submitting leave:", err);
+    const errorMessage = err.response?.data || err.message || "❌ Failed to submit leave request. Please try again.";
+    setErrorMsg(errorMessage);
+  }
+};
 
   // NEW: Open cancel confirmation modal
   const openCancelModal = (leave) => {
@@ -683,7 +698,7 @@ const prepareHighlightedDates = () => {
     highlights[dateStr] = {
       className: "holiday-day",
       backgroundColor: "#17a2b8", // Teal color for holidays
-      tooltip: "Public Holiday ðŸŽ‰"
+      tooltip: "Public Holiday 🎉"
     };
   });
 
@@ -836,7 +851,7 @@ const tileContent = ({ date, view }) => {
             right: '2px',
             fontSize: '8px'
           }}>
-            âš¡
+            ⚡
           </span>
         )}
       </div>
@@ -898,13 +913,13 @@ const tileClassName = ({ date, view }) => {
   //   // Validate file type
   //   const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
   //   if (!allowedTypes.includes(file.type)) {
-  //     setErrorMsg("âŒ Please upload JPEG, PNG, or PDF file only");
+  //     setErrorMsg("❌ Please upload JPEG, PNG, or PDF file only");
   //     return;
   //   }
     
   //   // Validate file size (max 2MB)
   //   if (file.size > 2 * 1024 * 1024) {
-  //     setErrorMsg("âŒ File size should be less than 2MB");
+  //     setErrorMsg("❌ File size should be less than 2MB");
   //     return;
   //   }
     
@@ -922,7 +937,7 @@ const tileClassName = ({ date, view }) => {
     // STRICTER VALIDATION: Don't allow weekend selection at all
     if (name === "startDate" || name === "endDate") {
       if (value && isWeekend(value)) {
-        setErrorMsg("âŒ Weekend dates are not allowed for leave applications. Please select a weekday.");
+        setErrorMsg("❌ Weekend dates are not allowed for leave applications. Please select a weekday.");
         return;
       }
       
@@ -938,7 +953,7 @@ const tileClassName = ({ date, view }) => {
 
   const handleMedicalDocumentChange = (e) => {
     const file = e.target.files && e.target.files[0] ? e.target.files[0] : null;
-    setMedicalDocument(file);
+    setMedicalDocument(e.target.files[0]);
   };
 
   // NEW: Calculate leave duration
@@ -1004,13 +1019,13 @@ const tileClassName = ({ date, view }) => {
   const getStatusDisplay = (status) => {
     switch (status) {
       case 'APPROVED':
-        return { text: 'Approved', icon: 'âœ…', class: 'text-success' };
+        return { text: 'Approved', icon: '✅', class: 'text-success' };
       case 'PENDING':
-        return { text: 'Pending Approval', icon: 'â³', class: 'text-warning' };
+        return { text: 'Pending Approval', icon: '⏳', class: 'text-warning' };
       case 'REJECTED':
-        return { text: 'Rejected', icon: 'âŒ', class: 'text-danger' };
+        return { text: 'Rejected', icon: '❌', class: 'text-danger' };
       case 'CANCELLED':
-        return { text: 'Cancelled', icon: 'ðŸ—‘ï¸', class: 'text-secondary' };
+        return { text: 'Cancelled', icon: '🗑️', class: 'text-secondary' };
       default:
         return { text: status, icon: '', class: 'text-muted' };
     }
@@ -1047,13 +1062,13 @@ const tileClassName = ({ date, view }) => {
       )}
       
       {errorMsg && (
-        <div className={`alert ${errorMsg.includes('âš ï¸') ? 'alert-warning' : 'alert-danger'} alert-dismissible fade show mb-4`} role="alert">
-          <strong>{errorMsg.includes('âš ï¸') ? 'Heads Up!' : 'Oops!'}</strong> {errorMsg}
+        <div className={`alert ${errorMsg.includes('⚠️') ? 'alert-warning' : 'alert-danger'} alert-dismissible fade show mb-4`} role="alert">
+          <strong>{errorMsg.includes('⚠️') ? 'Heads Up!' : 'Oops!'}</strong> {errorMsg}
           <button type="button" className="btn-close" onClick={() => setErrorMsg("")}></button>
         </div>
       )}
 
-      {/* ðŸŸ¢ NEW: Success Popup Modal */}
+      {/* 🟢 NEW: Success Popup Modal */}
       {showSuccessPopup && successPopupData && (
         <div 
           className="modal show d-block" 
@@ -1079,7 +1094,7 @@ const tileClassName = ({ date, view }) => {
               </div>
               <div className="modal-body text-center py-4">
                 <div className="success-animation mb-4">
-                  <div className="checkmark">âœ“</div>
+                  <div className="checkmark">✓</div>
                 </div>
                 
                 <h5 className="text-success mb-3 fw-bold">Your leave request has been submitted!</h5>
@@ -1184,7 +1199,7 @@ const tileClassName = ({ date, view }) => {
                 <div className="d-flex justify-content-between align-items-center">
                   <div>
                     <h5 className="mb-1 fw-bold text-dark">
-                      ðŸ“… Leave & Attendance Calendar
+                      📅 Leave & Attendance Calendar
                     </h5>
                     <p className="text-muted mb-0">
                       Visual overview of your leaves, holidays, and attendance patterns
@@ -1196,13 +1211,13 @@ const tileClassName = ({ date, view }) => {
                       className="btn btn-primary btn-lg px-4 py-2 fw-semibold"
                       onClick={openApplyLeaveModal}
                     >
-                      ðŸ“ Apply for Leave
+                      📝 Apply for Leave
                     </button>
                     <button
                       className="btn btn-outline-primary btn-sm"
                       onClick={() => setCalendarDate(new Date())}
                     >
-                      ðŸ“ Today
+                      📍 Today
                     </button>
                   </div>
                 </div>
@@ -1224,7 +1239,7 @@ const tileClassName = ({ date, view }) => {
                     
             {/* Legends moved below the calendar */}
 <div className="mt-4">
-  <h6 className="fw-bold mb-3 text-dark">ðŸ“Š Calendar Legend</h6>
+  <h6 className="fw-bold mb-3 text-dark">📊 Calendar Legend</h6>
   <div className="row g-3">
     <div className="col-md-12">
       <div className="card border-0 bg-light h-100">
@@ -1292,7 +1307,7 @@ const tileClassName = ({ date, view }) => {
                   <div className="col-lg-4">
                     <div className="card border-0 h-100 bg-light">
                       <div className="card-body">
-                        <h6 className="fw-bold mb-3 text-dark">ðŸ“Š Quick Stats</h6>
+                        <h6 className="fw-bold mb-3 text-dark">📊 Quick Stats</h6>
                         
                         {/* Hovered Date Information */}
                         {hoveredDateInfo ? (
@@ -1312,12 +1327,12 @@ const tileClassName = ({ date, view }) => {
                               'alert-light'
                             } mb-3`}>
                               <strong>
-                                {hoveredDateInfo.type === 'weekend' && 'ðŸ–ï¸ Weekend'}
-                                {hoveredDateInfo.type === 'holiday' && 'ðŸŽ‰ Public Holiday'}
-                                {hoveredDateInfo.type === 'leave' && 'ðŸ“… Leave Day'}
-                                {hoveredDateInfo.type === 'absent' && 'âŒ Absent'}
-                                {hoveredDateInfo.type === 'attendance' && 'ðŸ“Š Attendance Record'}
-                                {hoveredDateInfo.type === 'normal' && 'ðŸ“… Working Day'}
+                                {hoveredDateInfo.type === 'weekend' && '🏖️ Weekend'}
+                                {hoveredDateInfo.type === 'holiday' && '🎉 Public Holiday'}
+                                {hoveredDateInfo.type === 'leave' && '📅 Leave Day'}
+                                {hoveredDateInfo.type === 'absent' && '❌ Absent'}
+                                {hoveredDateInfo.type === 'attendance' && '📊 Attendance Record'}
+                                {hoveredDateInfo.type === 'normal' && '📅 Working Day'}
                               </strong>
                               <div className="mt-1 small">
                                 {hoveredDateInfo.message}
@@ -1369,7 +1384,7 @@ const tileClassName = ({ date, view }) => {
                             </p>
                             <div className="alert alert-light">
                               <small className="text-muted">
-                                ðŸ‘† Hover over any date in the calendar to see detailed information about leaves, attendance, weekends, and holidays.
+                                👆 Hover over any date in the calendar to see detailed information about leaves, attendance, weekends, and holidays.
                               </small>
                             </div>
                           </div>
@@ -1389,7 +1404,7 @@ const tileClassName = ({ date, view }) => {
                               </div>
                             </div>
                             <small className={`fw-semibold ${paidLeaveUsage.remaining === 0 ? 'text-danger' : 'text-muted'}`}>
-                              {paidLeaveUsage.remaining === 0 ? 'âŒ No paid leaves remaining' : `âœ… ${paidLeaveUsage.remaining} paid leave(s) remaining`}
+                              {paidLeaveUsage.remaining === 0 ? '❌ No paid leaves remaining' : `✅ ${paidLeaveUsage.remaining} paid leave(s) remaining`}
                             </small>
                           </div>
                         </div>
@@ -1440,7 +1455,7 @@ const tileClassName = ({ date, view }) => {
                           className="btn btn-outline-primary w-100 mt-3 py-2 fw-semibold"
                           onClick={openApplyLeaveModal}
                         >
-                          ðŸ“ Apply for Leave
+                          📝 Apply for Leave
                         </button>
                       </div>
                     </div>
@@ -1456,7 +1471,7 @@ const tileClassName = ({ date, view }) => {
               <div className="card-header bg-white border-0 py-4">
                 <div className="d-flex justify-content-between align-items-center">
                   <div>
-                    <h5 className="mb-1 fw-bold text-dark">ðŸ“‹ My Leave Requests</h5>
+                    <h5 className="mb-1 fw-bold text-dark">📋 My Leave Requests</h5>
                     <p className="text-muted mb-0">
                       View, manage, and track your leave applications
                     </p>
@@ -1473,7 +1488,7 @@ const tileClassName = ({ date, view }) => {
               <div className="card-body p-0">
                 {leaves.length === 0 ? (
                   <div className="text-center text-muted py-5">
-                    <div className="display-1 text-muted mb-3">ðŸ“­</div>
+                    <div className="display-1 text-muted mb-3">📭</div>
                     <h5 className="mb-2">No Leave Requests Found</h5>
                     <p className="mb-4">You haven't applied for any leaves yet.</p>
                     <button 
@@ -1515,7 +1530,7 @@ const tileClassName = ({ date, view }) => {
                                   </span>
                                   {leave.isConvertedFromPaid && (
                                     <span className="badge bg-warning text-dark mb-1" title="Automatically converted from PAID leave">
-                                      âš¡ Converted
+                                      ⚡ Converted
                                     </span>
                                   )}
                                 </div>
@@ -1632,7 +1647,7 @@ const tileClassName = ({ date, view }) => {
             <div className="modal-content border-0 shadow-lg">
               <div className="modal-header bg-primary text-white border-0">
                 <h5 className="modal-title fw-bold">
-                  {editingLeave ? "âœï¸ Edit Leave Request" : "ðŸ“ Apply for Leave"}
+                  {editingLeave ? "✏️ Edit Leave Request" : "📝 Apply for Leave"}
                 </h5>
                 <button 
                   type="button" 
@@ -1646,7 +1661,7 @@ const tileClassName = ({ date, view }) => {
                   <div className="d-flex align-items-center">
                     <i className="bi bi-calendar-week me-2"></i>
                     <div>
-                      <strong>ðŸ“… Weekday Leave Policy</strong><br/>
+                      <strong>📅 Weekday Leave Policy</strong><br/>
                       Leave applications are only allowed for weekdays (Monday to Friday). 
                       Weekend dates are strictly not allowed for leave applications.
                     </div>
@@ -1655,11 +1670,11 @@ const tileClassName = ({ date, view }) => {
 
                 {/* Form-level messages */}
                 {errorMsg && (
-                  <div className={`alert ${errorMsg.includes('âš ï¸') ? 'alert-warning' : 'alert-danger'} mb-4`}>
+                  <div className={`alert ${errorMsg.includes('⚠️') ? 'alert-warning' : 'alert-danger'} mb-4`}>
                     <div className="d-flex align-items-center">
-                      <i className={`bi ${errorMsg.includes('âš ï¸') ? 'bi-exclamation-triangle' : 'bi-x-circle'} me-2`}></i>
+                      <i className={`bi ${errorMsg.includes('⚠️') ? 'bi-exclamation-triangle' : 'bi-x-circle'} me-2`}></i>
                       <div>
-                        <strong>{errorMsg.includes('âš ï¸') ? 'Heads Up!' : 'Please check your input:'}</strong>
+                        <strong>{errorMsg.includes('⚠️') ? 'Heads Up!' : 'Please check your input:'}</strong>
                         <div className="mt-1">{errorMsg.replace(/^[^ ]+ /, '')}</div>
                       </div>
                     </div>
@@ -1672,7 +1687,7 @@ const tileClassName = ({ date, view }) => {
                     <div className="d-flex align-items-center">
                       <i className="bi bi-exclamation-triangle me-2"></i>
                       <div>
-                        <strong>âš ï¸ No Paid Leaves Remaining This Month</strong><br/>
+                        <strong>⚠️ No Paid Leaves Remaining This Month</strong><br/>
                         You have used all {paidLeaveUsage.limit} paid leaves this month. 
                         Any additional leave will be automatically converted to unpaid leave and require manager approval.
                       </div>
@@ -1685,7 +1700,7 @@ const tileClassName = ({ date, view }) => {
                     <div className="d-flex align-items-center">
                       <i className="bi bi-info-circle me-2"></i>
                       <div>
-                        <strong>ðŸ“Š Paid Leave Status</strong><br/>
+                        <strong>📊 Paid Leave Status</strong><br/>
                         You have used {paidLeaveUsage.used} of {paidLeaveUsage.limit} paid leaves this month. 
                         <strong> {paidLeaveUsage.remaining} paid leave(s) remaining.</strong>
                       </div>
@@ -1698,7 +1713,7 @@ const tileClassName = ({ date, view }) => {
                     <div className="d-flex align-items-center">
                       <i className="bi bi-house me-2"></i>
                       <div>
-                        <strong>ðŸ  Work From Home Information</strong><br/>
+                        <strong>🏠 Work From Home Information</strong><br/>
                         WFH requests require manager approval and count as present days for salary calculation. 
                         Please ensure you have proper internet connectivity and remain available during work hours.
                       </div>
@@ -1711,7 +1726,7 @@ const tileClassName = ({ date, view }) => {
                     <div className="d-flex align-items-center">
                       <i className="bi bi-currency-dollar me-2"></i>
                       <div>
-                        <strong>ðŸ’¡ Unpaid Leave Notice</strong><br/>
+                        <strong>💡 Unpaid Leave Notice</strong><br/>
                         Unpaid leaves do not affect your leave balance but will result in salary deduction for the leave days.
                         These require manager approval.
                       </div>
@@ -1733,11 +1748,11 @@ const tileClassName = ({ date, view }) => {
                         onChange={handleInputChange}
                         required
                       >
-                        <option value="SICK">ðŸ¤’ Sick Leave</option>
-                        <option value="PAID">ðŸ’° Paid Leave</option>
-                        <option value="CASUAL">ðŸ˜Š Casual Leave</option>
-                        <option value="UNPAID">ðŸ’¸ Unpaid Leave</option>
-                        <option value="WFH">ðŸ  Work From Home (WFH)</option>
+                        <option value="SICK">🤒 Sick Leave</option>
+                        <option value="PAID">💰 Paid Leave</option>
+                        <option value="CASUAL">😊 Casual Leave</option>
+                        <option value="UNPAID">💸 Unpaid Leave</option>
+                        <option value="WFH">🏠 Work From Home (WFH)</option>
                       </select>
                       <div className="form-text">
                         Choose the appropriate leave type for your situation
@@ -1791,7 +1806,7 @@ const tileClassName = ({ date, view }) => {
                       {newLeave.startDate && newLeave.endDate && (
                         <div className="mt-2">
                           <span className="badge bg-primary">
-                            ðŸ“… {calculateLeaveDuration(newLeave.startDate, newLeave.endDate)} day(s) selected
+                            📅 {calculateLeaveDuration(newLeave.startDate, newLeave.endDate)} day(s) selected
                           </span>
                           {calculateLeaveDuration(newLeave.startDate, newLeave.endDate) > 1 && (
                             <div className="small text-muted mt-1">
@@ -1890,7 +1905,7 @@ const tileClassName = ({ date, view }) => {
               </div>
               <div className="modal-body py-4">
                 <div className="alert alert-warning border-0 mb-4">
-                  <strong>âš ï¸ Are you sure you want to cancel this leave request?</strong>
+                  <strong>⚠️ Are you sure you want to cancel this leave request?</strong>
                   <p className="mb-0 mt-2">This action cannot be undone.</p>
                 </div>
                 
