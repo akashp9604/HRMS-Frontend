@@ -1,17 +1,17 @@
-﻿import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "axios";
 import "bootstrap/dist/css/bootstrap.min.css";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
 
 const EmployeeLeavePage = () => {
-  // ðŸŸ¢ NEW: Get logged-in employee info from localStorage
+  // 🟢 NEW: Get logged-in employee info from localStorage
   const employee = JSON.parse(localStorage.getItem("employee"));
   const employeeId = employee?.employeeId;
   const employeeName = employee?.employeeName;
  
-  // ðŸ” ADDED DEBUGGING
-  console.log("ðŸ”„ DEBUG: Component loaded - Employee data from localStorage:");
+  // 🔍 ADDED DEBUGGING
+  console.log("🔄 DEBUG: Component loaded - Employee data from localStorage:");
   console.log("  - Full employee object:", employee);
   console.log("  - Employee ID:", employeeId);
   console.log("  - Employee Name:", employeeName);
@@ -28,10 +28,7 @@ const EmployeeLeavePage = () => {
     startDate: "",
     endDate: "",
     reason: "",
-    // medicalCertificate: null,  // for medical leave
-    // medicalCertificateName: ""
   });
-  const [medicalDocument, setMedicalDocument] = useState(null);
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
   const [editingLeave, setEditingLeave] = useState(null);
@@ -62,13 +59,9 @@ const EmployeeLeavePage = () => {
   const [hoveredDateInfo, setHoveredDateInfo] = useState(null);
   const [attendanceData, setAttendanceData] = useState({});
 
-  // ðŸŸ¢ NEW: Success popup state
+  // 🟢 NEW: Success popup state
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
   const [successPopupData, setSuccessPopupData] = useState(null);
-
-//  NEW STATE FOR MEDICAL FILE
-// const [medicalFile, setMedicalFile] = useState(null);
-// const [medicalFileName, setMedicalFileName] = useState("");
 
   // Auto-hide messages after 5 seconds
   useEffect(() => {
@@ -81,7 +74,7 @@ const EmployeeLeavePage = () => {
     }
   }, [successMsg, errorMsg]);
 
-  // ðŸŸ¢ NEW: Auto-hide success popup after 5 seconds
+  // 🟢 NEW: Auto-hide success popup after 5 seconds
   useEffect(() => {
     if (showSuccessPopup) {
       const timer = setTimeout(() => {
@@ -95,13 +88,13 @@ const EmployeeLeavePage = () => {
   // Initialize employeeId from props or localStorage
   useEffect(() => {
     const id = employeeId || localStorage.getItem('employeeId') || '20250304-O-L-53';
-    console.log("ðŸ†” Setting employee ID:", id);
+    console.log("🆔 Setting employee ID:", id);
     setCurrentEmployeeId(id);
   }, [employeeId]);
 
   useEffect(() => {
     if (currentEmployeeId) {
-      console.log("ðŸ”„ Fetching data for employee:", currentEmployeeId);
+      console.log("🔄 Fetching data for employee:", currentEmployeeId);
       fetchData();
     }
   }, [currentEmployeeId]);
@@ -132,15 +125,11 @@ const EmployeeLeavePage = () => {
       startDate: "",
       endDate: "",
       reason: "",
-      // medicalCertificate: null,     
-      // medicalCertificateName: ""    
-
     });
-    setMedicalDocument(null);
     setErrorMsg("");
   };
 
-  // ðŸŸ¢ NEW: Show success popup
+  // 🟢 NEW: Show success popup
   const showLeaveSuccessPopup = (leaveData) => {
     setSuccessPopupData({
       leaveType: getLeaveTypeDisplay(leaveData.leaveType),
@@ -157,7 +146,7 @@ const EmployeeLeavePage = () => {
     setShowSuccessPopup(true);
   };
 
-  // ðŸŸ¢ NEW: Close success popup manually
+  // 🟢 NEW: Close success popup manually
   const closeSuccessPopup = () => {
     setShowSuccessPopup(false);
     setSuccessPopupData(null);
@@ -192,7 +181,7 @@ const EmployeeLeavePage = () => {
     if (isWeekend(start)) {
       return {
         isValid: false,
-        message: "âŒ Start date cannot be a weekend. Please select a weekday."
+        message: "❌ Start date cannot be a weekend. Please select a weekday."
       };
     }
     
@@ -200,7 +189,7 @@ const EmployeeLeavePage = () => {
     if (isWeekend(end)) {
       return {
         isValid: false,
-        message: "âŒ End date cannot be a weekend. Please select a weekday."
+        message: "❌ End date cannot be a weekend. Please select a weekday."
       };
     }
     
@@ -208,7 +197,7 @@ const EmployeeLeavePage = () => {
     if (start > end) {
       return {
         isValid: false,
-        message: "âŒ End date cannot be before start date."
+        message: "❌ End date cannot be before start date."
       };
     }
     
@@ -259,7 +248,7 @@ const EmployeeLeavePage = () => {
     return processedLeaves;
   };
 
-  // âœ… UPDATED: Fetch attendance data for a specific date using the correct API
+  // ✅ UPDATED: Fetch attendance data for a specific date using the correct API
   const fetchAttendanceForDate = async (date, employeeId) => {
     try {
       const dateStr = date.toISOString().split('T')[0];
@@ -269,9 +258,9 @@ const EmployeeLeavePage = () => {
         return attendanceData[dateStr];
       }
 
-      console.log("ðŸ” Fetching attendance for date:", { employeeId, date: dateStr });
+      console.log("🔍 Fetching attendance for date:", { employeeId, date: dateStr });
 
-      // âœ… CORRECTED: Use the proper API endpoint
+      // ✅ CORRECTED: Use the proper API endpoint
       const response = await axios.get(
         `http://localhost:8085/api/attendance/employee/${employeeId}/daily`,
         {
@@ -281,7 +270,7 @@ const EmployeeLeavePage = () => {
         }
       );
       
-      console.log("âœ… Attendance API Response:", response.data);
+      console.log("✅ Attendance API Response:", response.data);
       
       // Cache the attendance data
       setAttendanceData(prev => ({
@@ -291,7 +280,7 @@ const EmployeeLeavePage = () => {
       
       return response.data;
     } catch (error) {
-      console.error("âŒ Error fetching attendance for date:", error);
+      console.error("❌ Error fetching attendance for date:", error);
       if (error.response) {
         console.error("Error details:", {
           status: error.response.status,
@@ -302,7 +291,7 @@ const EmployeeLeavePage = () => {
     }
   };
 
-  // âœ… UPDATED: Handle date hover in calendar with proper attendance display
+  // ✅ UPDATED: Handle date hover in calendar with proper attendance display
   const handleDateHover = async (date) => {
     setHoveredDate(date);
     
@@ -334,7 +323,7 @@ const EmployeeLeavePage = () => {
     const holiday = holidays.find(h => h === dateISO);
     if (holiday) {
       info.type = 'holiday';
-      info.message = 'Public Holiday ðŸŽ‰';
+      info.message = 'Public Holiday 🎉';
       setHoveredDateInfo(info);
       return;
     }
@@ -363,30 +352,30 @@ const EmployeeLeavePage = () => {
         info.type = 'attendance';
         info.attendance = attendance;
         
-        // âœ… IMPROVED: Show comprehensive attendance information
+        // ✅ IMPROVED: Show comprehensive attendance information
         if (attendance.status === 'PRESENT') {
           if (attendance.outTime) {
-            info.message = `âœ… Present | In: ${formatTime(attendance.inTime)} | Out: ${formatTime(attendance.outTime)}`;
+            info.message = `✅ Present | In: ${formatTime(attendance.inTime)} | Out: ${formatTime(attendance.outTime)}`;
           } else if (attendance.inTime) {
-            info.message = `âœ… Present | In: ${formatTime(attendance.inTime)} | Still working...`;
+            info.message = `✅ Present | In: ${formatTime(attendance.inTime)} | Still working...`;
           } else {
-            info.message = 'âœ… Present (No time recorded)';
+            info.message = '✅ Present (No time recorded)';
           }
         } else if (attendance.status === 'ABSENT') {
           info.type = 'absent';
-          info.message = 'âŒ Absent';
+          info.message = '❌ Absent';
         } else if (attendance.status === 'LATE') {
-          info.message = `â° Late | In: ${formatTime(attendance.inTime)}`;
+          info.message = `⏰ Late | In: ${formatTime(attendance.inTime)}`;
           if (attendance.outTime) {
             info.message += ` | Out: ${formatTime(attendance.outTime)}`;
           }
         } else if (attendance.status === 'HALF_DAY') {
-          info.message = `ðŸ• Half Day | In: ${formatTime(attendance.inTime)}`;
+          info.message = `🕐 Half Day | In: ${formatTime(attendance.inTime)}`;
           if (attendance.outTime) {
             info.message += ` | Out: ${formatTime(attendance.outTime)}`;
           }
         } else {
-          info.message = `ðŸ“Š ${attendance.status || 'No attendance record'}`;
+          info.message = `📊 ${attendance.status || 'No attendance record'}`;
         }
 
         // Add work hours if available
@@ -398,11 +387,11 @@ const EmployeeLeavePage = () => {
         // No attendance record found
         if (date < new Date().setHours(0,0,0,0)) {
           info.type = 'absent';
-          info.message = 'âŒ Absent (No record)';
+          info.message = '❌ Absent (No record)';
         } else if (dateStr === today) {
-          info.message = 'ðŸ“Š No attendance recorded today yet';
+          info.message = '📊 No attendance recorded today yet';
         } else {
-          info.message = 'ðŸ“Š No attendance data available';
+          info.message = '📊 No attendance data available';
         }
       }
     }
@@ -418,13 +407,13 @@ const EmployeeLeavePage = () => {
 
   const fetchData = async () => {
     if (!currentEmployeeId) {
-      console.error("âŒ No employee ID available");
+      console.error("❌ No employee ID available");
       return;
     }
 
     setLoading(true);
     try {
-      console.log("ðŸ“Š Starting data fetch for employee:", currentEmployeeId);
+      console.log("📊 Starting data fetch for employee:", currentEmployeeId);
       
       // Fetch other data
       const [balanceRes, leavesRes, holidaysRes] = await Promise.all([
@@ -438,9 +427,9 @@ const EmployeeLeavePage = () => {
         }),
       ]);
 
-      console.log("âœ… Leave Balance:", balanceRes.data);
-      console.log("âœ… Leaves:", leavesRes.data);
-      console.log("âœ… Holidays:", holidaysRes.data);
+      console.log("✅ Leave Balance:", balanceRes.data);
+      console.log("✅ Leaves:", leavesRes.data);
+      console.log("✅ Holidays:", holidaysRes.data);
 
       setLeaveBalance(balanceRes.data);
       
@@ -453,7 +442,7 @@ const EmployeeLeavePage = () => {
       // NEW: Fetch initial paid leave usage
       await fetchPaidLeaveUsage();
     } catch (err) {
-      console.error("âŒ Error fetching data:", err);
+      console.error("❌ Error fetching data:", err);
       setErrorMsg("Failed to load data. Please refresh the page.");
     } finally {
       setLoading(false);
@@ -471,36 +460,36 @@ const EmployeeLeavePage = () => {
       );
       setPaidLeaveUsage(response.data);
     } catch (err) {
-      console.error("âŒ Error fetching paid leave usage:", err);
+      console.error("❌ Error fetching paid leave usage:", err);
     }
   };
 
   // NEW: Fetch employee's leave requests specifically for "My Requests" tab
   const fetchMyLeaveRequests = async () => {
     if (!currentEmployeeId) {
-      console.error("âŒ No employee ID available for fetching leave requests");
+      console.error("❌ No employee ID available for fetching leave requests");
       return;
     }
 
     try {
-      console.log("ðŸ” Fetching leave requests for employee:", currentEmployeeId);
+      console.log("🔍 Fetching leave requests for employee:", currentEmployeeId);
       
       const response = await axios.get(`http://localhost:8087/api/leaves/employee/${currentEmployeeId}`);
       
-      console.log("âœ… API Response:", response);
-      console.log("âœ… Response Data:", response.data);
+      console.log("✅ API Response:", response);
+      console.log("✅ Response Data:", response.data);
 
       if (response.data && Array.isArray(response.data)) {
         // Process leaves to get manager names
         const processedLeaves = await processLeavesWithManagerNames(response.data);
         setLeaves(processedLeaves);
-        console.log(`âœ… Loaded ${response.data.length} leave requests`);
+        console.log(`✅ Loaded ${response.data.length} leave requests`);
       } else {
-        console.error("âŒ Invalid response format");
+        console.error("❌ Invalid response format");
         setLeaves([]);
       }
     } catch (err) {
-      console.error("âŒ Error fetching my leave requests:", err);
+      console.error("❌ Error fetching my leave requests:", err);
       setErrorMsg("Failed to load your leave requests. Please try again.");
       setLeaves([]);
     }
@@ -514,12 +503,12 @@ const EmployeeLeavePage = () => {
     }
 
     try {
-      console.log("ðŸ—‘ï¸ Cancelling leave:", leaveId);
+      console.log("🗑️ Cancelling leave:", leaveId);
       
       const response = await axios.put(`http://localhost:8087/api/leaves/cancel/${leaveId}`);
       
-      console.log("âœ… Leave cancelled successfully:", response.data);
-      setSuccessMsg("âœ… Leave request cancelled successfully!");
+      console.log("✅ Leave cancelled successfully:", response.data);
+      setSuccessMsg("✅ Leave request cancelled successfully!");
       
       // Refresh the data
       fetchMyLeaveRequests();
@@ -529,14 +518,14 @@ const EmployeeLeavePage = () => {
       setShowCancelModal(false);
       setCancellingLeave(null);
     } catch (err) {
-      console.error("âŒ Error cancelling leave:", err);
-      setErrorMsg(err.response?.data || "âŒ Failed to cancel leave request. Please try again.");
+      console.error("❌ Error cancelling leave:", err);
+      setErrorMsg(err.response?.data || "❌ Failed to cancel leave request. Please try again.");
     }
   };
 
   // NEW: Edit leave request
   const handleEditLeave = (leave) => {
-    console.log("âœï¸ Editing leave:", leave);
+    console.log("✏️ Editing leave:", leave);
     
     // Set the form to edit mode
     setEditingLeave(leave);
@@ -553,20 +542,11 @@ const EmployeeLeavePage = () => {
     e.preventDefault();
     setErrorMsg("");
     setSuccessMsg("");
-    const isEditMode = editingLeave !== null;
 
     if (!currentEmployeeId) {
-      setErrorMsg("âŒ Employee ID is not available. Please refresh the page.");
+      setErrorMsg("❌ Employee ID is not available. Please refresh the page.");
       return;
     }
-    
-  //   // Validate medical certificate for SICK leave
-  // if (newLeave.leaveType === "SICK") {
-  //   if (!medicalFile) {
-  //     setErrorMsg("âŒ Medical certificate is required for sick leave. Please upload a document.");
-  //     return;
-  //   }
-  // }
 
     // Validate dates before submission - STRICTER VALIDATION
     const validation = validateLeaveDates(newLeave.startDate, newLeave.endDate);
@@ -580,7 +560,7 @@ const EmployeeLeavePage = () => {
     const end = new Date(newLeave.endDate);
     
     if (isWeekend(start) || isWeekend(end)) {
-      setErrorMsg("âŒ Leave applications are not allowed for weekends. Please select weekdays only.");
+      setErrorMsg("❌ Leave applications are not allowed for weekends. Please select weekdays only.");
       return;
     }
 
@@ -591,78 +571,54 @@ const EmployeeLeavePage = () => {
     };
 
     const leaveData = {
-      //employeeId: currentEmployeeId,
+      employeeId: currentEmployeeId,
       leaveType: newLeave.leaveType,
       startDate: formatDate(newLeave.startDate),
       endDate: formatDate(newLeave.endDate),
       reason: newLeave.reason,
     };
 
-    //  Add employeeId only for new leave (not for edit)
-    if (!isEditMode) {
-      leaveData.employeeId = currentEmployeeId;
-    }
-    if (!isEditMode && newLeave.leaveType === "SICK" && !medicalDocument) {
-      setErrorMsg("❌ Please upload a medical document for sick leave.");
-      return;
-    }
-
-    console.log("ðŸ“¤ Sending leave request:", leaveData);
+    console.log("📤 Sending leave request:", leaveData);
 
     try {
       // Get Basic Auth from localStorage
       const authUser = JSON.parse(localStorage.getItem("authUser"));
       if (!authUser) {
-        setErrorMsg("âš ï¸ Login info not found. Please login again.");
+        setErrorMsg("⚠️ Login info not found. Please login again.");
         return;
       }
 
       const { username, password } = authUser;
       const basicAuth = "Basic " + btoa(`${username}:${password}`);
 
-      let response;
+      const response = await axios.post(
+        "http://localhost:8087/api/leaves/apply",
+        leaveData,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: basicAuth,
+          },
+        }
+      );
+
+      console.log("✅ Leave apply response:", response.data);
       
-      if (isEditMode) {
-        // EDIT MODE: Send PUT request to update existing leave
-        response = await axios.put(
-          `http://localhost:8087/api/leaves/edit/${editingLeave.id}`,
-          leaveData,
-          {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: basicAuth,
-            },
-          }
-        );
-        console.log("âœ… Leave updated successfully:", response.data);
-        setSuccessMsg("âœ… Leave request updated successfully!");
-      } else {
-        // NEW LEAVE MODE: Send POST request to create new leave
-        response = await axios.post(
-          "http://localhost:8087/api/leaves/apply",
-          leaveData,
-          {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: basicAuth,
-            },
-          }
-        );
-        console.log("âœ… Leave apply response:", response.data);
-        showLeaveSuccessPopup(leaveData);
-        setSuccessMsg("âœ… Leave application submitted successfully!");
-      }
+      // 🟢 UPDATED: Show success popup instead of just message
+      showLeaveSuccessPopup(leaveData);
+      setSuccessMsg("✅ Leave application submitted successfully!");
+
       // Reset form and close modal
       closeApplyLeaveModal();
       fetchData();
       fetchMyLeaveRequests();
 
     } catch (err) {
-      console.error("âŒ Error submitting leave:", err);
+      console.error("❌ Error submitting leave:", err);
       const errorMessage =
         err.response?.data ||
         err.message ||
-        "âŒ Failed to submit leave request. Please try again.";
+        "❌ Failed to submit leave request. Please try again.";
       setErrorMsg(errorMessage);
     }
   };
@@ -673,207 +629,176 @@ const EmployeeLeavePage = () => {
     setShowCancelModal(true);
   };
 
-// Prepare highlighted dates for calendar - NOW WITH BACKGROUND COLORS instead of icons
-const prepareHighlightedDates = () => {
-  const highlights = {};
+  // Prepare highlighted dates for calendar
+  const prepareHighlightedDates = () => {
+    const highlights = {};
 
-  // Mark holidays
-  holidays.forEach((holiday) => {
-    const dateStr = new Date(holiday).toDateString();
-    highlights[dateStr] = {
-      className: "holiday-day",
-      backgroundColor: "#17a2b8", // Teal color for holidays
-      tooltip: "Public Holiday ðŸŽ‰"
-    };
-  });
-
-  // Mark leave days
-  leaves.forEach((leave) => {
-    if (!leave.startDate || !leave.endDate) return;
-    
-    const start = new Date(leave.startDate);
-    const end = new Date(leave.endDate);
-    const current = new Date(start);
-
-    while (current <= end) {
-      const dateStr = current.toDateString();
-      const status = leave.status ? leave.status.toLowerCase() : 'pending';
-
-      let className = "";
-      let backgroundColor = "";
-      let tooltip = "";
-
-      // Handle different leave types and statuses - NOW USING BACKGROUND COLORS
-      switch (status) {
-        case "approved":
-          if (leave.leaveType === "WFH") {
-            className = "wfh-approved";
-            backgroundColor = "#6f42c1"; // Purple for WFH Approved
-            tooltip = `Work From Home - Approved`;
-          } else {
-            className = "approved-leave";
-            backgroundColor = "#28a745"; // Green for Approved Leave
-            tooltip = `Approved ${getLeaveTypeDisplay(leave.leaveType)}`;
-          }
-          break;
-          
-        case "pending":
-          if (leave.leaveType === "WFH") {
-            className = "wfh-pending";
-            backgroundColor = "#9b59b6"; // Lighter Purple for WFH Pending
-            tooltip = `Work From Home - Pending Approval`;
-          } else if (leave.leaveType === "PAID") {
-            className = "paid-pending";
-            backgroundColor = "#20c997"; // Teal/Green for Paid Pending
-            tooltip = `Paid Leave - Pending Approval`;
-          } else if (leave.leaveType === "SICK") {
-            className = "sick-pending";
-            backgroundColor = "#fd7e14"; // Orange for Sick Pending
-            tooltip = `Sick Leave - Pending Approval`;
-          } else if (leave.leaveType === "CASUAL") {
-            className = "casual-pending";
-            backgroundColor = "#e83e8c"; // Pink for Casual Pending
-            tooltip = `Casual Leave - Pending Approval`;
-          } else if (leave.leaveType === "UNPAID") {
-            className = "unpaid-pending";
-            backgroundColor = "#6c757d"; // Gray for Unpaid Pending
-            tooltip = `Unpaid Leave - Pending Approval`;
-          } else {
-            className = "pending-leave";
-            backgroundColor = "#ffc107"; // Yellow for general Pending
-            tooltip = `Pending ${getLeaveTypeDisplay(leave.leaveType)}`;
-          }
-          break;
-          
-        case "rejected":
-          if (leave.leaveType === "WFH") {
-            className = "wfh-rejected";
-            backgroundColor = "#dc3545"; // Red for WFH Rejected
-            tooltip = `Work From Home - Rejected`;
-          } else {
-            className = "rejected-leave";
-            backgroundColor = "#dc3545"; // Red for Rejected Leave
-            tooltip = `Rejected ${getLeaveTypeDisplay(leave.leaveType)}`;
-          }
-          break;
-          
-        case "cancelled":
-          if (leave.leaveType === "WFH") {
-            className = "wfh-cancelled";
-            backgroundColor = "#adb5bd"; // Gray for Cancelled
-            tooltip = `Work From Home - Cancelled`;
-          } else {
-            className = "cancelled-leave";
-            backgroundColor = "#adb5bd"; // Gray for Cancelled Leave
-            tooltip = `Cancelled ${getLeaveTypeDisplay(leave.leaveType)}`;
-          }
-          break;
-          
-        default:
-          className = "leave-day";
-          backgroundColor = "#6c757d"; // Dark Gray
-          tooltip = "Leave Day";
-      }
-
-      // For converted leaves, add special indicator
-      if (leave.isConvertedFromPaid) {
-        tooltip += " - Converted from Paid Leave";
-        // Add a subtle pattern for converted leaves - optional
-      }
-
-      highlights[dateStr] = { 
-        className, 
-        backgroundColor, 
-        tooltip,
-        // Optionally add a small indicator for special types
-        hasIndicator: leave.isConvertedFromPaid || false
+    // Mark holidays
+    holidays.forEach((holiday) => {
+      const dateStr = new Date(holiday).toDateString();
+      highlights[dateStr] = {
+        className: "holiday-day",
+        content: "🎉",
+        tooltip: "Public Holiday"
       };
-      current.setDate(current.getDate() + 1);
-    }
-  });
+    });
 
-  setHighlightedDates(highlights);
-};
+    // Mark leave days
+    leaves.forEach((leave) => {
+      if (!leave.startDate || !leave.endDate) return;
+      
+      const start = new Date(leave.startDate);
+      const end = new Date(leave.endDate);
+      const current = new Date(start);
+
+      while (current <= end) {
+        const dateStr = current.toDateString();
+        const status = leave.status ? leave.status.toLowerCase() : 'pending';
+
+        let className = "";
+        let content = "";
+        let tooltip = "";
+
+        // Handle different leave types and statuses
+        switch (status) {
+          case "approved":
+            if (leave.leaveType === "WFH") {
+              className = "wfh-approved";
+              content = "🏠";
+              tooltip = `Work From Home - Approved`;
+            } else {
+              className = "approved-leave";
+              content = "✓";
+              tooltip = `Approved ${getLeaveTypeDisplay(leave.leaveType)}`;
+            }
+            break;
+            
+          case "pending":
+            if (leave.leaveType === "WFH") {
+              className = "wfh-pending";
+              content = "🏠?";
+              tooltip = `Work From Home - Pending Approval`;
+            } else if (leave.leaveType === "PAID") {
+              className = "paid-pending";
+              content = "💰?";
+              tooltip = `Paid Leave - Pending Approval`;
+            } else if (leave.leaveType === "SICK") {
+              className = "sick-pending";
+              content = "🤒?";
+              tooltip = `Sick Leave - Pending Approval`;
+            } else if (leave.leaveType === "CASUAL") {
+              className = "casual-pending";
+              content = "😊?";
+              tooltip = `Casual Leave - Pending Approval`;
+            } else if (leave.leaveType === "UNPAID") {
+              className = "unpaid-pending";
+              content = "💸?";
+              tooltip = `Unpaid Leave - Pending Approval`;
+            } else {
+              className = "pending-leave";
+              content = "?";
+              tooltip = `Pending ${getLeaveTypeDisplay(leave.leaveType)}`;
+            }
+            break;
+            
+          case "rejected":
+            if (leave.leaveType === "WFH") {
+              className = "wfh-rejected";
+              content = "🏠✗";
+              tooltip = `Work From Home - Rejected`;
+            } else {
+              className = "rejected-leave";
+              content = "✗";
+              tooltip = `Rejected ${getLeaveTypeDisplay(leave.leaveType)}`;
+            }
+            break;
+            
+          case "cancelled":
+            if (leave.leaveType === "WFH") {
+              className = "wfh-cancelled";
+              content = "🏠✕";
+              tooltip = `Work From Home - Cancelled`;
+            } else {
+              className = "cancelled-leave";
+              content = "✕";
+              tooltip = `Cancelled ${getLeaveTypeDisplay(leave.leaveType)}`;
+            }
+            break;
+            
+          default:
+            className = "leave-day";
+            content = "L";
+            tooltip = "Leave Day";
+        }
+
+        // For converted leaves, add special indicator
+        if (leave.isConvertedFromPaid) {
+          content = "⚡";
+          tooltip += " - Converted from Paid Leave";
+        }
+
+        highlights[dateStr] = { className, content, tooltip };
+        current.setDate(current.getDate() + 1);
+      }
+    });
+
+    setHighlightedDates(highlights);
+  };
+
   // Custom tile content for react-calendar
-// Custom tile content for react-calendar - NOW WITH BACKGROUND COLORS
-const tileContent = ({ date, view }) => {
-  if (view !== "month") {
-    return null;
-  }
+  const tileContent = ({ date, view }) => {
+    if (view !== "month") {
+      return null;
+    }
 
-  const dateStr = date.toDateString();
-  const highlight = highlightedDates[dateStr];
-  const today = new Date().toDateString();
-  const isToday = dateStr === today;
+    const dateStr = date.toDateString();
+    const highlight = highlightedDates[dateStr];
 
-  if (highlight) {
+    if (highlight) {
+      return (
+        <div 
+          className={`calendar-badge ${highlight.className}`}
+          title={highlight.tooltip}
+          onMouseEnter={() => handleDateHover(date)}
+          onMouseLeave={handleDateHoverOut}
+        >
+          {highlight.content}
+        </div>
+      );
+    }
+
     return (
       <div 
-        className={`calendar-tile-content ${highlight.className}`}
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: highlight.backgroundColor,
-          borderRadius: '8px',
-          opacity: 0.85,
-          zIndex: 0,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center'
-        }}
-        title={highlight.tooltip}
+        className="calendar-day-hover"
         onMouseEnter={() => handleDateHover(date)}
         onMouseLeave={handleDateHoverOut}
-      >
-        {/* Optionally add a small dot or indicator for converted leaves */}
-        {highlight.hasIndicator && (
-          <span style={{
-            position: 'absolute',
-            bottom: '2px',
-            right: '2px',
-            fontSize: '8px'
-          }}>
-            âš¡
-          </span>
-        )}
-      </div>
+        style={{ height: '100%', width: '100%' }}
+      />
     );
-  }
+  };
 
-  return (
-    <div 
-      className="calendar-day-hover"
-      onMouseEnter={() => handleDateHover(date)}
-      onMouseLeave={handleDateHoverOut}
-      style={{ height: '100%', width: '100%', position: 'relative', zIndex: 1 }}
-    />
-  );
-};
- // Custom tile className for additional styling
-const tileClassName = ({ date, view }) => {
-  if (view !== "month") {
-    return "";
-  }
+  // Custom tile className for additional styling
+  const tileClassName = ({ date, view }) => {
+    if (view !== "month") {
+      return "";
+    }
 
-  const classes = [];
-  const dateStr = date.toDateString();
-  const today = new Date().toDateString();
+    const classes = [];
+    const dateStr = date.toDateString();
+    const today = new Date().toDateString();
 
-  // Highlight today with blue background (this will override other colors)
-  if (dateStr === today) {
-    classes.push("today-highlight");
-  }
+    // Highlight today
+    if (dateStr === today) {
+      classes.push("today-highlight");
+    }
 
-  // Weekend styling - subtle background
-  if (date.getDay() === 0 || date.getDay() === 6) {
-    classes.push("weekend-day");
-  }
+    // Weekend styling
+    if (date.getDay() === 0 || date.getDay() === 6) {
+      classes.push("weekend-day");
+    }
 
-  return classes.join(" ");
-};
+    return classes.join(" ");
+  };
 
   // Handle calendar date change
   const handleCalendarDateChange = (newDate) => {
@@ -890,39 +815,11 @@ const tileClassName = ({ date, view }) => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-
-  //   //  Handle file input
-  // if (name === "medicalCertificate" && files && files[0]) {
-  //   const file = files[0];
-    
-  //   // Validate file type
-  //   const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
-  //   if (!allowedTypes.includes(file.type)) {
-  //     setErrorMsg("âŒ Please upload JPEG, PNG, or PDF file only");
-  //     return;
-  //   }
-    
-  //   // Validate file size (max 2MB)
-  //   if (file.size > 2 * 1024 * 1024) {
-  //     setErrorMsg("âŒ File size should be less than 2MB");
-  //     return;
-  //   }
-    
-  //   setMedicalFile(file);
-  //   setMedicalFileName(file.name);
-  //   setNewLeave({ 
-  //     ...newLeave, 
-  //     medicalCertificate: file,
-  //     medicalCertificateName: file.name 
-  //   });
-  //   setErrorMsg("");
-  //   return;
-  // }
     
     // STRICTER VALIDATION: Don't allow weekend selection at all
     if (name === "startDate" || name === "endDate") {
       if (value && isWeekend(value)) {
-        setErrorMsg("âŒ Weekend dates are not allowed for leave applications. Please select a weekday.");
+        setErrorMsg("❌ Weekend dates are not allowed for leave applications. Please select a weekday.");
         return;
       }
       
@@ -930,15 +827,7 @@ const tileClassName = ({ date, view }) => {
       setErrorMsg(""); // Clear error if valid date selected
     } else {
       setNewLeave({ ...newLeave, [name]: value });
-      if (name === "leaveType" && value !== "SICK") {
-        setMedicalDocument(null);
-      }
     }
-  };
-
-  const handleMedicalDocumentChange = (e) => {
-    const file = e.target.files && e.target.files[0] ? e.target.files[0] : null;
-    setMedicalDocument(file);
   };
 
   // NEW: Calculate leave duration
@@ -1004,13 +893,13 @@ const tileClassName = ({ date, view }) => {
   const getStatusDisplay = (status) => {
     switch (status) {
       case 'APPROVED':
-        return { text: 'Approved', icon: 'âœ…', class: 'text-success' };
+        return { text: 'Approved', icon: '✅', class: 'text-success' };
       case 'PENDING':
-        return { text: 'Pending Approval', icon: 'â³', class: 'text-warning' };
+        return { text: 'Pending Approval', icon: '⏳', class: 'text-warning' };
       case 'REJECTED':
-        return { text: 'Rejected', icon: 'âŒ', class: 'text-danger' };
+        return { text: 'Rejected', icon: '❌', class: 'text-danger' };
       case 'CANCELLED':
-        return { text: 'Cancelled', icon: 'ðŸ—‘ï¸', class: 'text-secondary' };
+        return { text: 'Cancelled', icon: '🗑️', class: 'text-secondary' };
       default:
         return { text: status, icon: '', class: 'text-muted' };
     }
@@ -1047,13 +936,13 @@ const tileClassName = ({ date, view }) => {
       )}
       
       {errorMsg && (
-        <div className={`alert ${errorMsg.includes('âš ï¸') ? 'alert-warning' : 'alert-danger'} alert-dismissible fade show mb-4`} role="alert">
-          <strong>{errorMsg.includes('âš ï¸') ? 'Heads Up!' : 'Oops!'}</strong> {errorMsg}
+        <div className={`alert ${errorMsg.includes('⚠️') ? 'alert-warning' : 'alert-danger'} alert-dismissible fade show mb-4`} role="alert">
+          <strong>{errorMsg.includes('⚠️') ? 'Heads Up!' : 'Oops!'}</strong> {errorMsg}
           <button type="button" className="btn-close" onClick={() => setErrorMsg("")}></button>
         </div>
       )}
 
-      {/* ðŸŸ¢ NEW: Success Popup Modal */}
+      {/* 🟢 NEW: Success Popup Modal */}
       {showSuccessPopup && successPopupData && (
         <div 
           className="modal show d-block" 
@@ -1079,7 +968,7 @@ const tileClassName = ({ date, view }) => {
               </div>
               <div className="modal-body text-center py-4">
                 <div className="success-animation mb-4">
-                  <div className="checkmark">âœ“</div>
+                  <div className="checkmark">✓</div>
                 </div>
                 
                 <h5 className="text-success mb-3 fw-bold">Your leave request has been submitted!</h5>
@@ -1184,7 +1073,7 @@ const tileClassName = ({ date, view }) => {
                 <div className="d-flex justify-content-between align-items-center">
                   <div>
                     <h5 className="mb-1 fw-bold text-dark">
-                      ðŸ“… Leave & Attendance Calendar
+                      📅 Leave & Attendance Calendar
                     </h5>
                     <p className="text-muted mb-0">
                       Visual overview of your leaves, holidays, and attendance patterns
@@ -1196,13 +1085,13 @@ const tileClassName = ({ date, view }) => {
                       className="btn btn-primary btn-lg px-4 py-2 fw-semibold"
                       onClick={openApplyLeaveModal}
                     >
-                      ðŸ“ Apply for Leave
+                      📝 Apply for Leave
                     </button>
                     <button
                       className="btn btn-outline-primary btn-sm"
                       onClick={() => setCalendarDate(new Date())}
                     >
-                      ðŸ“ Today
+                      📍 Today
                     </button>
                   </div>
                 </div>
@@ -1218,81 +1107,65 @@ const tileClassName = ({ date, view }) => {
                         tileClassName={tileClassName}
                         className="custom-react-calendar"
                         showNeighboringMonth={false}
-                        calendarType="gregory"
                       />
                     </div>
                     
-            {/* Legends moved below the calendar */}
-<div className="mt-4">
-  <h6 className="fw-bold mb-3 text-dark">ðŸ“Š Calendar Legend</h6>
-  <div className="row g-3">
-    <div className="col-md-12">
-      <div className="card border-0 bg-light h-100">
-        <div className="card-body py-3">
-          <h6 className="fw-semibold text-muted mb-3">Leave Status & Holidays:</h6>
-          <div className="row g-2">
-            <div className="col-md-6">
-              {/* Approved Leave */}
-              <div className="d-flex align-items-center mb-2">
-                <div className="me-2" style={{width: '24px', height: '24px', backgroundColor: '#28a745', borderRadius: '4px'}}></div>
-                <small className="text-muted">Approved Leave</small>
-              </div>
-              
-              {/* Pending Leave */}
-              <div className="d-flex align-items-center mb-2">
-                <div className="me-2" style={{width: '24px', height: '24px', backgroundColor: '#ffc107', borderRadius: '4px'}}></div>
-                <small className="text-muted">Pending Leave</small>
-              </div>
-              
-              {/* Rejected Leave */}
-              <div className="d-flex align-items-center mb-2">
-                <div className="me-2" style={{width: '24px', height: '24px', backgroundColor: '#dc3545', borderRadius: '4px'}}></div>
-                <small className="text-muted">Rejected Leave</small>
-              </div>
-              
-              {/* Cancelled Leave */}
-              <div className="d-flex align-items-center mb-2">
-                <div className="me-2" style={{width: '24px', height: '24px', backgroundColor: '#6c757d', borderRadius: '4px'}}></div>
-                <small className="text-muted">Cancelled Leave</small>
-              </div>
-            </div>
-            
-            <div className="col-md-6">
-              {/* WFH Approved */}
-              <div className="d-flex align-items-center mb-2">
-                <div className="me-2" style={{width: '24px', height: '24px', backgroundColor: '#6f42c1', borderRadius: '4px'}}></div>
-                <small className="text-muted">WFH Approved</small>
-              </div>
-              
-              {/* WFH Pending */}
-              <div className="d-flex align-items-center mb-2">
-                <div className="me-2" style={{width: '24px', height: '24px', backgroundColor: '#9b59b6', borderRadius: '4px'}}></div>
-                <small className="text-muted">WFH Pending</small>
-              </div>
-              
-              {/* Public Holiday */}
-              <div className="d-flex align-items-center mb-2">
-                <div className="me-2" style={{width: '24px', height: '24px', backgroundColor: '#17a2b8', borderRadius: '4px'}}></div>
-                <small className="text-muted">Public Holiday</small>
-              </div>
-              
-              {/* Paid Leave Pending */}
-              <div className="d-flex align-items-center mb-2">
-                <div className="me-2" style={{width: '24px', height: '24px', backgroundColor: '#20c997', borderRadius: '4px'}}></div>
-                <small className="text-muted">Paid Leave Pending</small>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
+                    {/* Legends moved below the calendar */}
+                    <div className="mt-4">
+                      <h6 className="fw-bold mb-3 text-dark">📊 Calendar Legend</h6>
+                      <div className="row g-3">
+                        <div className="col-md-12">
+                          <div className="card border-0 bg-light h-100">
+                            <div className="card-body py-3">
+                              <h6 className="fw-semibold text-muted mb-3">Leave Status & Holidays:</h6>
+                              <div className="row g-2">
+                                <div className="col-6">
+                                  <div className="d-flex align-items-center mb-2">
+                                    <span className="badge bg-success me-2">✓</span>
+                                    <small className="text-muted">Approved Leave</small>
+                                  </div>
+                                  <div className="d-flex align-items-center mb-2">
+                                    <span className="badge bg-warning me-2">?</span>
+                                    <small className="text-muted">Pending Leave</small>
+                                  </div>
+                                  <div className="d-flex align-items-center mb-2">
+                                    <span className="badge bg-danger me-2">✗</span>
+                                    <small className="text-muted">Rejected Leave</small>
+                                  </div>
+                                  <div className="d-flex align-items-center mb-2">
+                                    <span className="badge bg-secondary me-2">✕</span>
+                                    <small className="text-muted">Cancelled Leave</small>
+                                  </div>
+                                </div>
+                                <div className="col-6">
+                                  <div className="d-flex align-items-center mb-2">
+                                    <span className="badge bg-primary me-2">🏠</span>
+                                    <small className="text-muted">WFH Approved</small>
+                                  </div>
+                                  <div className="d-flex align-items-center mb-2">
+                                    <span className="badge bg-purple me-2">🏠?</span>
+                                    <small className="text-muted">WFH Pending</small>
+                                  </div>
+                                  <div className="d-flex align-items-center mb-2">
+                                    <span className="badge bg-info me-2">🎉</span>
+                                    <small className="text-muted">Public Holiday</small>
+                                  </div>
+                                  <div className="d-flex align-items-center mb-2">
+                                    <span className="badge bg-warning text-dark me-2">💰?</span>
+                                    <small className="text-muted">Paid Leave Pending</small>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                   <div className="col-lg-4">
                     <div className="card border-0 h-100 bg-light">
                       <div className="card-body">
-                        <h6 className="fw-bold mb-3 text-dark">ðŸ“Š Quick Stats</h6>
+                        <h6 className="fw-bold mb-3 text-dark">📊 Quick Stats</h6>
                         
                         {/* Hovered Date Information */}
                         {hoveredDateInfo ? (
@@ -1312,12 +1185,12 @@ const tileClassName = ({ date, view }) => {
                               'alert-light'
                             } mb-3`}>
                               <strong>
-                                {hoveredDateInfo.type === 'weekend' && 'ðŸ–ï¸ Weekend'}
-                                {hoveredDateInfo.type === 'holiday' && 'ðŸŽ‰ Public Holiday'}
-                                {hoveredDateInfo.type === 'leave' && 'ðŸ“… Leave Day'}
-                                {hoveredDateInfo.type === 'absent' && 'âŒ Absent'}
-                                {hoveredDateInfo.type === 'attendance' && 'ðŸ“Š Attendance Record'}
-                                {hoveredDateInfo.type === 'normal' && 'ðŸ“… Working Day'}
+                                {hoveredDateInfo.type === 'weekend' && '🏖️ Weekend'}
+                                {hoveredDateInfo.type === 'holiday' && '🎉 Public Holiday'}
+                                {hoveredDateInfo.type === 'leave' && '📅 Leave Day'}
+                                {hoveredDateInfo.type === 'absent' && '❌ Absent'}
+                                {hoveredDateInfo.type === 'attendance' && '📊 Attendance Record'}
+                                {hoveredDateInfo.type === 'normal' && '📅 Working Day'}
                               </strong>
                               <div className="mt-1 small">
                                 {hoveredDateInfo.message}
@@ -1369,7 +1242,7 @@ const tileClassName = ({ date, view }) => {
                             </p>
                             <div className="alert alert-light">
                               <small className="text-muted">
-                                ðŸ‘† Hover over any date in the calendar to see detailed information about leaves, attendance, weekends, and holidays.
+                                👆 Hover over any date in the calendar to see detailed information about leaves, attendance, weekends, and holidays.
                               </small>
                             </div>
                           </div>
@@ -1389,7 +1262,7 @@ const tileClassName = ({ date, view }) => {
                               </div>
                             </div>
                             <small className={`fw-semibold ${paidLeaveUsage.remaining === 0 ? 'text-danger' : 'text-muted'}`}>
-                              {paidLeaveUsage.remaining === 0 ? 'âŒ No paid leaves remaining' : `âœ… ${paidLeaveUsage.remaining} paid leave(s) remaining`}
+                              {paidLeaveUsage.remaining === 0 ? '❌ No paid leaves remaining' : `✅ ${paidLeaveUsage.remaining} paid leave(s) remaining`}
                             </small>
                           </div>
                         </div>
@@ -1440,7 +1313,7 @@ const tileClassName = ({ date, view }) => {
                           className="btn btn-outline-primary w-100 mt-3 py-2 fw-semibold"
                           onClick={openApplyLeaveModal}
                         >
-                          ðŸ“ Apply for Leave
+                          📝 Apply for Leave
                         </button>
                       </div>
                     </div>
@@ -1456,7 +1329,7 @@ const tileClassName = ({ date, view }) => {
               <div className="card-header bg-white border-0 py-4">
                 <div className="d-flex justify-content-between align-items-center">
                   <div>
-                    <h5 className="mb-1 fw-bold text-dark">ðŸ“‹ My Leave Requests</h5>
+                    <h5 className="mb-1 fw-bold text-dark">📋 My Leave Requests</h5>
                     <p className="text-muted mb-0">
                       View, manage, and track your leave applications
                     </p>
@@ -1473,7 +1346,7 @@ const tileClassName = ({ date, view }) => {
               <div className="card-body p-0">
                 {leaves.length === 0 ? (
                   <div className="text-center text-muted py-5">
-                    <div className="display-1 text-muted mb-3">ðŸ“­</div>
+                    <div className="display-1 text-muted mb-3">📭</div>
                     <h5 className="mb-2">No Leave Requests Found</h5>
                     <p className="mb-4">You haven't applied for any leaves yet.</p>
                     <button 
@@ -1515,7 +1388,7 @@ const tileClassName = ({ date, view }) => {
                                   </span>
                                   {leave.isConvertedFromPaid && (
                                     <span className="badge bg-warning text-dark mb-1" title="Automatically converted from PAID leave">
-                                      âš¡ Converted
+                                      ⚡ Converted
                                     </span>
                                   )}
                                 </div>
@@ -1632,7 +1505,7 @@ const tileClassName = ({ date, view }) => {
             <div className="modal-content border-0 shadow-lg">
               <div className="modal-header bg-primary text-white border-0">
                 <h5 className="modal-title fw-bold">
-                  {editingLeave ? "âœï¸ Edit Leave Request" : "ðŸ“ Apply for Leave"}
+                  {editingLeave ? "✏️ Edit Leave Request" : "📝 Apply for Leave"}
                 </h5>
                 <button 
                   type="button" 
@@ -1646,7 +1519,7 @@ const tileClassName = ({ date, view }) => {
                   <div className="d-flex align-items-center">
                     <i className="bi bi-calendar-week me-2"></i>
                     <div>
-                      <strong>ðŸ“… Weekday Leave Policy</strong><br/>
+                      <strong>📅 Weekday Leave Policy</strong><br/>
                       Leave applications are only allowed for weekdays (Monday to Friday). 
                       Weekend dates are strictly not allowed for leave applications.
                     </div>
@@ -1655,11 +1528,11 @@ const tileClassName = ({ date, view }) => {
 
                 {/* Form-level messages */}
                 {errorMsg && (
-                  <div className={`alert ${errorMsg.includes('âš ï¸') ? 'alert-warning' : 'alert-danger'} mb-4`}>
+                  <div className={`alert ${errorMsg.includes('⚠️') ? 'alert-warning' : 'alert-danger'} mb-4`}>
                     <div className="d-flex align-items-center">
-                      <i className={`bi ${errorMsg.includes('âš ï¸') ? 'bi-exclamation-triangle' : 'bi-x-circle'} me-2`}></i>
+                      <i className={`bi ${errorMsg.includes('⚠️') ? 'bi-exclamation-triangle' : 'bi-x-circle'} me-2`}></i>
                       <div>
-                        <strong>{errorMsg.includes('âš ï¸') ? 'Heads Up!' : 'Please check your input:'}</strong>
+                        <strong>{errorMsg.includes('⚠️') ? 'Heads Up!' : 'Please check your input:'}</strong>
                         <div className="mt-1">{errorMsg.replace(/^[^ ]+ /, '')}</div>
                       </div>
                     </div>
@@ -1672,7 +1545,7 @@ const tileClassName = ({ date, view }) => {
                     <div className="d-flex align-items-center">
                       <i className="bi bi-exclamation-triangle me-2"></i>
                       <div>
-                        <strong>âš ï¸ No Paid Leaves Remaining This Month</strong><br/>
+                        <strong>⚠️ No Paid Leaves Remaining This Month</strong><br/>
                         You have used all {paidLeaveUsage.limit} paid leaves this month. 
                         Any additional leave will be automatically converted to unpaid leave and require manager approval.
                       </div>
@@ -1685,7 +1558,7 @@ const tileClassName = ({ date, view }) => {
                     <div className="d-flex align-items-center">
                       <i className="bi bi-info-circle me-2"></i>
                       <div>
-                        <strong>ðŸ“Š Paid Leave Status</strong><br/>
+                        <strong>📊 Paid Leave Status</strong><br/>
                         You have used {paidLeaveUsage.used} of {paidLeaveUsage.limit} paid leaves this month. 
                         <strong> {paidLeaveUsage.remaining} paid leave(s) remaining.</strong>
                       </div>
@@ -1698,7 +1571,7 @@ const tileClassName = ({ date, view }) => {
                     <div className="d-flex align-items-center">
                       <i className="bi bi-house me-2"></i>
                       <div>
-                        <strong>ðŸ  Work From Home Information</strong><br/>
+                        <strong>🏠 Work From Home Information</strong><br/>
                         WFH requests require manager approval and count as present days for salary calculation. 
                         Please ensure you have proper internet connectivity and remain available during work hours.
                       </div>
@@ -1711,7 +1584,7 @@ const tileClassName = ({ date, view }) => {
                     <div className="d-flex align-items-center">
                       <i className="bi bi-currency-dollar me-2"></i>
                       <div>
-                        <strong>ðŸ’¡ Unpaid Leave Notice</strong><br/>
+                        <strong>💡 Unpaid Leave Notice</strong><br/>
                         Unpaid leaves do not affect your leave balance but will result in salary deduction for the leave days.
                         These require manager approval.
                       </div>
@@ -1733,11 +1606,11 @@ const tileClassName = ({ date, view }) => {
                         onChange={handleInputChange}
                         required
                       >
-                        <option value="SICK">ðŸ¤’ Sick Leave</option>
-                        <option value="PAID">ðŸ’° Paid Leave</option>
-                        <option value="CASUAL">ðŸ˜Š Casual Leave</option>
-                        <option value="UNPAID">ðŸ’¸ Unpaid Leave</option>
-                        <option value="WFH">ðŸ  Work From Home (WFH)</option>
+                        <option value="SICK">🤒 Sick Leave</option>
+                        <option value="PAID">💰 Paid Leave</option>
+                        <option value="CASUAL">😊 Casual Leave</option>
+                        <option value="UNPAID">💸 Unpaid Leave</option>
+                        <option value="WFH">🏠 Work From Home (WFH)</option>
                       </select>
                       <div className="form-text">
                         Choose the appropriate leave type for your situation
@@ -1791,7 +1664,7 @@ const tileClassName = ({ date, view }) => {
                       {newLeave.startDate && newLeave.endDate && (
                         <div className="mt-2">
                           <span className="badge bg-primary">
-                            ðŸ“… {calculateLeaveDuration(newLeave.startDate, newLeave.endDate)} day(s) selected
+                            📅 {calculateLeaveDuration(newLeave.startDate, newLeave.endDate)} day(s) selected
                           </span>
                           {calculateLeaveDuration(newLeave.startDate, newLeave.endDate) > 1 && (
                             <div className="small text-muted mt-1">
@@ -1820,24 +1693,6 @@ const tileClassName = ({ date, view }) => {
                         Provide clear details to help with the approval process
                       </div>
                     </div>
-                    {newLeave.leaveType === "SICK" && (
-                      <div className="col-md-6 mb-4">
-                        <label className="form-label fw-semibold text-dark">
-                          <i className="bi bi-file-earmark-arrow-up me-2 text-primary"></i>
-                          Upload Medical Document
-                        </label>
-                        <input
-                          type="file"
-                          className="form-control form-control-lg"
-                          accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-                          onChange={handleMedicalDocumentChange}
-                          required={newLeave.leaveType === "SICK"}
-                        />
-                        <div className="form-text">
-                          Required for sick leave applications.
-                        </div>
-                      </div>
-                    )}
                   </div>
                   <div className="d-flex gap-3 justify-content-end border-top pt-4">
                     <button
@@ -1890,7 +1745,7 @@ const tileClassName = ({ date, view }) => {
               </div>
               <div className="modal-body py-4">
                 <div className="alert alert-warning border-0 mb-4">
-                  <strong>âš ï¸ Are you sure you want to cancel this leave request?</strong>
+                  <strong>⚠️ Are you sure you want to cancel this leave request?</strong>
                   <p className="mb-0 mt-2">This action cannot be undone.</p>
                 </div>
                 
@@ -1958,463 +1813,296 @@ const tileClassName = ({ date, view }) => {
       )}
 
       {/* Custom CSS for calendar and enhancements */}
-{/* Custom CSS for calendar and enhancements */}
-<style>
-  {`
-    .calendar-container {
-      background: white;
-      border-radius: 12px;
-      padding: 1.5rem;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    }
-    
-    .custom-react-calendar {
-      width: 100%;
-      border: none;
-      font-family: inherit;
-      font-size: 1rem;
-    }
-    
-    /* Calendar tile base styling */
-    .react-calendar__tile {
-      position: relative;
-      height: 70px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      border-radius: 8px;
-      margin: 2px;
-      transition: all 0.2s ease;
-      overflow: hidden;
-      background-color: white;
-    }
-    
-    /* Date number styling - make it visible over colored backgrounds */
-    .react-calendar__tile abbr {
-      position: relative;
-      z-index: 3;
-      font-weight: 500;
-      font-size: 1rem;
-    }
-    
-    /* Hover effect */
-    .react-calendar__tile:hover {
-      transform: scale(1.02);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-      z-index: 10;
-    }
-    
-    /* Calendar badge container for background colors */
-    .calendar-badge {
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      width: 100%;
-      height: 100%;
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 1;
-    }
-    
-    .calendar-day-hover {
-      cursor: pointer;
-      position: relative;
-      z-index: 2;
-    }
-    
-    /* ==================== */
-    /* BACKGROUND COLORS FOR LEAVE TYPES */
-    /* ==================== */
-    
-    /* Approved Leave - Green Background */
-    .approved-leave {
-      background-color: #28a745 !important;
-    }
-    
-    /* Approved WFH - Purple Background */
-    .wfh-approved {
-      background-color: #6f42c1 !important;
-    }
-    
-    /* Pending Leave - Yellow/Orange Background */
-    .pending-leave {
-      background-color: #ffc107 !important;
-    }
-    
-    /* Pending WFH - Light Purple Background */
-    .wfh-pending {
-      background-color: #9b59b6 !important;
-    }
-    
-    /* Pending Paid Leave - Teal Green Background */
-    .paid-pending {
-      background-color: #20c997 !important;
-    }
-    
-    /* Pending Sick Leave - Orange Background */
-    .sick-pending {
-      background-color: #fd7e14 !important;
-    }
-    
-    /* Pending Casual Leave - Pink Background */
-    .casual-pending {
-      background-color: #e83e8c !important;
-    }
-    
-    /* Pending Unpaid Leave - Gray Background */
-    .unpaid-pending {
-      background-color: #6c757d !important;
-    }
-    
-    /* Rejected Leave - Red Background */
-    .rejected-leave {
-      background-color: #dc3545 !important;
-    }
-    
-    /* Rejected WFH - Red Background */
-    .wfh-rejected {
-      background-color: #dc3545 !important;
-    }
-    
-    /* Cancelled Leave - Dark Gray Background */
-    .cancelled-leave {
-      background-color: #6c757d !important;
-    }
-    
-    /* Cancelled WFH - Dark Gray Background */
-    .wfh-cancelled {
-      background-color: #6c757d !important;
-    }
-    
-    /* Holiday - Teal Background */
-    .holiday-day {
-      background-color: #17a2b8 !important;
-    }
-    
-    /* ==================== */
-    /* TEXT COLORS FOR DATE NUMBERS */
-    /* ==================== */
-    
-    /* White text for dark backgrounds */
-    .approved-leave abbr,
-    .wfh-approved abbr,
-    .wfh-pending abbr,
-    .paid-pending abbr,
-    .sick-pending abbr,
-    .casual-pending abbr,
-    .unpaid-pending abbr,
-    .rejected-leave abbr,
-    .wfh-rejected abbr,
-    .cancelled-leave abbr,
-    .wfh-cancelled abbr,
-    .holiday-day abbr {
-      color: white !important;
-      font-weight: bold !important;
-    }
-    
-    /* Dark text for yellow/orange backgrounds */
-    .pending-leave abbr {
-      color: #212529 !important;
-      font-weight: bold !important;
-    }
-    
-    /* ==================== */
-    /* TODAY HIGHLIGHT - BLUE BACKGROUND (PRIORITY) */
-    /* ==================== */
-    
-    .today-highlight {
-      background-color: #007bff !important;
-      border: none !important;
-      position: relative;
-    }
-    
-    .today-highlight abbr {
-      color: white !important;
-      font-weight: bold !important;
-      z-index: 3;
-      position: relative;
-    }
-    
-    /* Override for today when it has special leave/holiday - blend effect */
-    .today-highlight .calendar-badge {
-      opacity: 0.7 !important;
-    }
-    
-    /* ==================== */
-    /* WEEKEND DAYS */
-    /* ==================== */
-    
-    .weekend-day {
-      background-color: #f8f9fa;
-    }
-    
-    .weekend-day abbr {
-      color: #6c757d;
-    }
-    
-    /* ==================== */
-    /* ACTIVE SELECTED DATE */
-    /* ==================== */
-    
-    .react-calendar__tile--active {
-      background-color: #0056b3 !important;
-      color: white !important;
-      font-weight: bold;
-      border: 2px solid #003d80 !important;
-    }
-    
-    .react-calendar__tile--active abbr {
-      color: white !important;
-    }
-    
-    .react-calendar__tile--active .calendar-badge {
-      opacity: 0.8;
-    }
-    
-    /* ==================== */
-    /* NAVIGATION BUTTONS */
-    /* ==================== */
-    
-    .react-calendar__navigation button {
-      font-size: 1.1rem;
-      font-weight: 600;
-      padding: 0.5rem 1rem;
-      border-radius: 8px;
-    }
-    
-    .react-calendar__navigation button:hover {
-      background-color: #e3f2fd;
-    }
-    
-    .react-calendar__navigation {
-      margin-bottom: 1rem;
-    }
-    
-    /* ==================== */
-    /* WEEKDAY HEADERS */
-    /* ==================== */
-    
-    .react-calendar__month-view__weekdays {
-      font-weight: 600;
-      color: #495057;
-      margin-bottom: 0.5rem;
-      text-transform: uppercase;
-      font-size: 0.85rem;
-    }
-    
-    .react-calendar__month-view__weekdays abbr {
-      text-decoration: none;
-      font-weight: 600;
-    }
+      <style>
+        {`
+          .calendar-container {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+          }
+          
+          .custom-react-calendar {
+            width: 100%;
+            border: none;
+            font-family: inherit;
+            font-size: 1rem;
+          }
+          
+          .react-calendar__tile {
+            position: relative;
+            height: 70px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            margin: 2px;
+            transition: all 0.2s ease;
+          }
+          
+          .react-calendar__tile:hover {
+            background-color: #e3f2fd;
+            transform: scale(1.05);
+          }
+          
+          .calendar-badge {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.3);
+            cursor: pointer;
+          }
+          
+          .calendar-day-hover {
+            cursor: pointer;
+          }
+          
+          /* Pending Leave Types - Different colors for different leave types */
+          .pending-leave {
+            background-color: #ffc107;
+            color: black;
+          }
 
-    .react-calendar__month-view__days{
-    /* gap: 5px !important;*/
-      display: flex !important;
-      flex-wrap: wrap !important;
-      /*gap: 6px !important;*/
-      
-    }
-    
-    /* ==================== */
-    /* NEIGHBORING MONTH DAYS */
-    /* ==================== */
-    
-    .react-calendar__month-view__days__day--neighboringMonth {
-      color: #adb5bd;
-    }
-    
-    .react-calendar__month-view__days__day--neighboringMonth abbr {
-      color: #adb5bd;
-    }
-    
-    /* ==================== */
-    /* CUSTOM UTILITY CLASSES */
-    /* ==================== */
-    
-    .bg-purple {
-      background-color: #6f42c1 !important;
-    }
-    
-    .text-purple {
-      color: #6f42c1 !important;
-    }
-    
-    /* ==================== */
-    /* SUCCESS POPUP ANIMATION */
-    /* ==================== */
-    
-    .success-animation {
-      margin: 0 auto;
-    }
-    
-    .checkmark {
-      width: 80px;
-      height: 80px;
-      border-radius: 50%;
-      display: block;
-      stroke-width: 2;
-      stroke: #4bb71b;
-      stroke-miterlimit: 10;
-      box-shadow: inset 0px 0px 0px #4bb71b;
-      animation: fill .4s ease-in-out .4s forwards, scale .3s ease-in-out .9s both;
-      position: relative;
-      margin: 0 auto;
-    }
-    
-    .checkmark__circle {
-      stroke-dasharray: 166;
-      stroke-dashoffset: 166;
-      stroke-width: 2;
-      stroke-miterlimit: 10;
-      stroke: #4bb71b;
-      fill: #fff;
-      animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
-    }
-    
-    .checkmark__check {
-      transform-origin: 50% 50%;
-      stroke-dasharray: 48;
-      stroke-dashoffset: 48;
-      animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.8s forwards;
-    }
-    
-    @keyframes stroke {
-      100% {
-        stroke-dashoffset: 0;
-      }
-    }
-    
-    @keyframes scale {
-      0%, 100% {
-        transform: none;
-      }
-      50% {
-        transform: scale3d(1.1, 1.1, 1);
-      }
-    }
-    
-    @keyframes fill {
-      100% {
-        box-shadow: inset 0px 0px 0px 30px #4bb71b;
-      }
-    }
-    
-    /* ==================== */
-    /* GRADIENT BACKGROUNDS */
-    /* ==================== */
-    
-    .bg-gradient-primary {
-      background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
-    }
-    
-    .bg-gradient-warning {
-      background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
-    }
-    
-    .bg-gradient-info {
-      background: linear-gradient(135deg, #17a2b8 0%, #117a8b 100%);
-    }
-    
-    .bg-gradient-success {
-      background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
-    }
-    
-    /* ==================== */
-    /* BUTTON STYLES */
-    /* ==================== */
-    
-    .btn-primary {
-      background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
-      border: none;
-      border-radius: 8px;
-      font-weight: 600;
-    }
-    
-    .btn-primary:hover {
-      background: linear-gradient(135deg, #0056b3 0%, #004085 100%);
-      transform: translateY(-1px);
-      box-shadow: 0 4px 8px rgba(0,123,255,0.3);
-    }
-    
-    /* ==================== */
-    /* TABLE ENHANCEMENTS */
-    /* ==================== */
-    
-    .table-hover tbody tr:hover {
-      background-color: rgba(0,123,255,0.05);
-      transform: translateX(4px);
-      transition: all 0.2s ease;
-    }
-    
-    /* ==================== */
-    /* MODAL ENHANCEMENTS */
-    /* ==================== */
-    
-    .modal-content {
-      border-radius: 12px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-    }
-    
-    /* ==================== */
-    /* FORM ENHANCEMENTS */
-    /* ==================== */
-    
-    .form-control, .form-select {
-      border-radius: 8px;
-      border: 2px solid #e9ecef;
-      transition: all 0.2s ease;
-    }
-    
-    .form-control:focus, .form-select:focus {
-      border-color: #007bff;
-      box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
-    }
-    
-    /* ==================== */
-    /* BADGE ENHANCEMENTS */
-    /* ==================== */
-    
-    .badge {
-      border-radius: 6px;
-      font-weight: 500;
-    }
-    
-    /* ==================== */
-    /* ALERT ENHANCEMENTS */
-    /* ==================== */
-    
-    .alert {
-      border-radius: 8px;
-      border: none;
-    }
-    
-    /* ==================== */
-    /* SMALL INDICATOR FOR CONVERTED LEAVES */
-    /* ==================== */
-    
-    .converted-leave-indicator {
-      position: absolute;
-      bottom: 2px;
-      right: 2px;
-      font-size: 8px;
-      z-index: 4;
-    }
-      /* Legend color boxes animation */
-    .legend-color-box {
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
+          .wfh-pending {
+            background-color: #6f42c1;
+            color: white;
+          }
 
-    .legend-color-box:hover {
-      transform: scale(1.05);
-      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    }  
-      `}
-</style>
+          .paid-pending {
+            background-color: #20c997;
+            color: white;
+          }
+
+          .sick-pending {
+            background-color: #fd7e14;
+            color: white;
+          }
+
+          .casual-pending {
+            background-color: #e83e8c;
+            color: white;
+          }
+
+          .unpaid-pending {
+            background-color: #6c757d;
+            color: white;
+          }
+
+          /* Approved Leave Types */
+          .approved-leave {
+            background-color: #28a745;
+            color: white;
+          }
+
+          .wfh-approved {
+            background-color: #007bff;
+            color: white;
+          }
+
+          /* Rejected Leave Types */
+          .rejected-leave {
+            background-color: #dc3545;
+            color: white;
+          }
+
+          .wfh-rejected {
+            background-color: #dc3545;
+            color: white;
+          }
+
+          /* Cancelled Leave Types */
+          .cancelled-leave {
+            background-color: #6c757d;
+            color: white;
+          }
+
+          .wfh-cancelled {
+            background-color: #6c757d;
+            color: white;
+          }
+
+          /* Holiday */
+          .holiday-day {
+            background-color: #17a2b8;
+            color: white;
+          }
+
+          /* Custom purple color for WFH pending */
+          .bg-purple {
+            background-color: #6f42c1 !important;
+          }
+
+          .text-purple {
+            color: #6f42c1 !important;
+          }
+          
+          .today-highlight {
+            background-color: #e3f2fd !important;
+            font-weight: bold;
+            border: 2px solid #007bff !important;
+          }
+          
+          .weekend-day {
+            background-color: #f8f9fa;
+          }
+          
+          .react-calendar__tile--active {
+            background-color: #007bff !important;
+            color: white !important;
+            font-weight: bold;
+          }
+          
+          .react-calendar__navigation button {
+            font-size: 1.1rem;
+            font-weight: 600;
+            padding: 0.5rem 1rem;
+          }
+          
+          .react-calendar__navigation {
+            margin-bottom: 1rem;
+          }
+          
+          .react-calendar__month-view__weekdays {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 0.5rem;
+          }
+          
+          /* 🟢 NEW: Success popup animation */
+          .success-animation {
+            margin: 0 auto;
+          }
+
+          .checkmark {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: block;
+            stroke-width: 2;
+            stroke: #4bb71b;
+            stroke-miterlimit: 10;
+            box-shadow: inset 0px 0px 0px #4bb71b;
+            animation: fill .4s ease-in-out .4s forwards, scale .3s ease-in-out .9s both;
+            position: relative;
+            margin: 0 auto;
+          }
+          .checkmark__circle {
+            stroke-dasharray: 166;
+            stroke-dashoffset: 166;
+            stroke-width: 2;
+            stroke-miterlimit: 10;
+            stroke: #4bb71b;
+            fill: #fff;
+            animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+          }
+
+          .checkmark__check {
+            transform-origin: 50% 50%;
+            stroke-dasharray: 48;
+            stroke-dashoffset: 48;
+            animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.8s forwards;
+          }
+
+          @keyframes stroke {
+            100% {
+              stroke-dashoffset: 0;
+            }
+          }
+
+          @keyframes scale {
+            0%, 100% {
+              transform: none;
+            }
+            50% {
+              transform: scale3d(1.1, 1.1, 1);
+            }
+          }
+
+          @keyframes fill {
+            100% {
+              box-shadow: inset 0px 0px 0px 30px #4bb71b;
+            }
+          }
+
+          /* Gradient backgrounds for cards */
+          .bg-gradient-primary {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+          }
+          
+          .bg-gradient-warning {
+            background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+          }
+          
+          .bg-gradient-info {
+            background: linear-gradient(135deg, #17a2b8 0%, #117a8b 100%);
+          }
+          
+          .bg-gradient-success {
+            background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+          }
+          
+          /* Custom button styles */
+          .btn-primary {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+          }
+          
+          .btn-primary:hover {
+            background: linear-gradient(135deg, #0056b3 0%, #004085 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,123,255,0.3);
+          }
+          
+          /* Table enhancements */
+          .table-hover tbody tr:hover {
+            background-color: rgba(0,123,255,0.05);
+            transform: translateX(4px);
+            transition: all 0.2s ease;
+          }
+          
+          /* Modal enhancements */
+          .modal-content {
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+          }
+          
+          /* Form enhancements */
+          .form-control, .form-select {
+            border-radius: 8px;
+            border: 2px solid #e9ecef;
+            transition: all 0.2s ease;
+          }
+          
+          .form-control:focus, .form-select:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
+          }
+          
+          /* Badge enhancements */
+          .badge {
+            border-radius: 6px;
+            font-weight: 500;
+          }
+          
+          /* Alert enhancements */
+          .alert {
+            border-radius: 8px;
+            border: none;
+          }
+        `}
+      </style>
     </div>
   );
 };
