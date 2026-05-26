@@ -126,6 +126,7 @@ const EmployeeLeavePage = () => {
       endDate: "",
       reason: "",
     });
+ setMedicalDocument(null);
     setErrorMsg("");
   };
 
@@ -538,61 +539,75 @@ const EmployeeLeavePage = () => {
     setShowApplyModal(true);
   };
 
-  const handleSubmitLeave = async (e) => {
-    e.preventDefault();
-    setErrorMsg("");
-    setSuccessMsg("");
+const handleSubmitLeave = async (e) => {
+  e.preventDefault();
+  setErrorMsg("");
+  setSuccessMsg("");
+  const isEditMode = editingLeave !== null;
 
-    if (!currentEmployeeId) {
-      setErrorMsg("❌ Employee ID is not available. Please refresh the page.");
+  if (!currentEmployeeId) {
+    setErrorMsg("❌ Employee ID is not available. Please refresh the page.");
+    return;
+  }
+
+  // Validate dates before submission
+  const validation = validateLeaveDates(newLeave.startDate, newLeave.endDate);
+  if (!validation.isValid) {
+    setErrorMsg(validation.message);
+    return;
+  }
+
+  // Additional check: explicitly prevent weekend leaves
+  const start = new Date(newLeave.startDate);
+  const end = new Date(newLeave.endDate);
+  if (isWeekend(start) || isWeekend(end)) {
+    setErrorMsg("❌ Leave applications are not allowed for weekends. Please select weekdays only.");
+    return;
+  }
+
+  // Format dates to YYYY-MM-DD
+  const formatDate = (dateStr) => {
+    const d = new Date(dateStr);
+    return d.toISOString().split("T")[0];
+  };
+
+  // 🔧 FIX: Build the leaveData object as expected by backend (@RequestPart("leaveData"))
+  const leaveData = {
+    leaveType: newLeave.leaveType,
+    startDate: formatDate(newLeave.startDate),
+    endDate: formatDate(newLeave.endDate),
+    reason: newLeave.reason,
+  };
+
+  // Add employeeId only for new leave (not for edit)
+  if (!isEditMode) {
+    leaveData.employeeId = currentEmployeeId;
+  }
+
+  // 🔧 FIX: Validate file presence for sick leave (unchanged logic)
+  if (!isEditMode && newLeave.leaveType === "SICK" && !medicalDocument) {
+    setErrorMsg("❌ Please upload a medical document for sick leave.");
+    return;
+  }
+
+  console.log("📤 Sending leave request:", leaveData);
+
+  try {
+    const authUser = JSON.parse(localStorage.getItem("authUser"));
+    if (!authUser) {
+      setErrorMsg("⚠️ Login info not found. Please login again.");
       return;
     }
 
-    // Validate dates before submission - STRICTER VALIDATION
-    const validation = validateLeaveDates(newLeave.startDate, newLeave.endDate);
-    if (!validation.isValid) {
-      setErrorMsg(validation.message);
-      return;
-    }
+    const { username, password } = authUser;
+    const basicAuth = "Basic " + btoa(`${username}:${password}`);
 
-    // Additional check: explicitly prevent weekend leaves
-    const start = new Date(newLeave.startDate);
-    const end = new Date(newLeave.endDate);
-    
-    if (isWeekend(start) || isWeekend(end)) {
-      setErrorMsg("❌ Leave applications are not allowed for weekends. Please select weekdays only.");
-      return;
-    }
+    let response;
 
-    // Format dates to YYYY-MM-DD
-    const formatDate = (dateStr) => {
-      const d = new Date(dateStr);
-      return d.toISOString().split("T")[0];
-    };
-
-    const leaveData = {
-      employeeId: currentEmployeeId,
-      leaveType: newLeave.leaveType,
-      startDate: formatDate(newLeave.startDate),
-      endDate: formatDate(newLeave.endDate),
-      reason: newLeave.reason,
-    };
-
-    console.log("📤 Sending leave request:", leaveData);
-
-    try {
-      // Get Basic Auth from localStorage
-      const authUser = JSON.parse(localStorage.getItem("authUser"));
-      if (!authUser) {
-        setErrorMsg("⚠️ Login info not found. Please login again.");
-        return;
-      }
-
-      const { username, password } = authUser;
-      const basicAuth = "Basic " + btoa(`${username}:${password}`);
-
-      const response = await axios.post(
-        "http://localhost:8087/api/leaves/apply",
+    // 🔧 FIX: Edit mode stays JSON (your backend likely expects JSON for edits)
+    if (isEditMode) {
+      response = await axios.put(
+        `http://localhost:8087/api/leaves/edit/${editingLeave.id}`,
         leaveData,
         {
           headers: {
@@ -601,27 +616,61 @@ const EmployeeLeavePage = () => {
           },
         }
       );
+      console.log("✅ Leave request updated successfully!");
+    } 
+    // 🔧 FIX: New leave – decide whether to send FormData (sick with file) or JSON (others)
+    else {
+      // Check if this is a sick leave WITH a file
+      const isSickWithFile = newLeave.leaveType === "SICK" && medicalDocument;
+
+      if (isSickWithFile) {
+        // 🔧 FIX: Use FormData for sick leave with medical document
+        const formData = new FormData();
+        // Send leaveData as a JSON blob (must be a string)
+        formData.append("leaveData", new Blob([JSON.stringify(leaveData)], { type: "application/json" }));
+        // 🔧 FIX: Append file with name "document" (backend expects @RequestPart("document"))
+        formData.append("document", medicalDocument);
+
+        response = await axios.post(
+          "http://localhost:8087/api/leaves/apply",
+          formData,
+          {
+            headers: {
+              Authorization: basicAuth,
+              // 🔧 FIX: Do NOT set Content-Type – browser will set it with the correct boundary
+            },
+          }
+        );
+      } else {
+        // 🔧 FIX: For leaves without a file (Paid, Casual, Unpaid, WFH, or sick without file – though validation prevents sick without file)
+        response = await axios.post(
+          "http://localhost:8087/api/leaves/apply",
+          leaveData,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: basicAuth,
+            },
+          }
+        );
+      }
 
       console.log("✅ Leave apply response:", response.data);
-      
-      // 🟢 UPDATED: Show success popup instead of just message
       showLeaveSuccessPopup(leaveData);
       setSuccessMsg("✅ Leave application submitted successfully!");
-
-      // Reset form and close modal
-      closeApplyLeaveModal();
-      fetchData();
-      fetchMyLeaveRequests();
-
-    } catch (err) {
-      console.error("❌ Error submitting leave:", err);
-      const errorMessage =
-        err.response?.data ||
-        err.message ||
-        "❌ Failed to submit leave request. Please try again.";
-      setErrorMsg(errorMessage);
     }
-  };
+
+    // Reset form and close modal
+    closeApplyLeaveModal();
+    fetchData();
+    fetchMyLeaveRequests();
+
+  } catch (err) {
+    console.error("❌ Error submitting leave:", err);
+    const errorMessage = err.response?.data || err.message || "❌ Failed to submit leave request. Please try again.";
+    setErrorMsg(errorMessage);
+  }
+};
 
   // NEW: Open cancel confirmation modal
   const openCancelModal = (leave) => {
@@ -633,15 +682,15 @@ const EmployeeLeavePage = () => {
   const prepareHighlightedDates = () => {
     const highlights = {};
 
-    // Mark holidays
-    holidays.forEach((holiday) => {
-      const dateStr = new Date(holiday).toDateString();
-      highlights[dateStr] = {
-        className: "holiday-day",
-        content: "🎉",
-        tooltip: "Public Holiday"
-      };
-    });
+  // Mark holidays
+  holidays.forEach((holiday) => {
+    const dateStr = new Date(holiday).toDateString();
+    highlights[dateStr] = {
+      className: "holiday-day",
+      backgroundColor: "#17a2b8", // Teal color for holidays
+      tooltip: "Public Holiday 🎉"
+    };
+  });
 
     // Mark leave days
     leaves.forEach((leave) => {
@@ -754,18 +803,42 @@ const EmployeeLeavePage = () => {
     const dateStr = date.toDateString();
     const highlight = highlightedDates[dateStr];
 
-    if (highlight) {
-      return (
-        <div 
-          className={`calendar-badge ${highlight.className}`}
-          title={highlight.tooltip}
-          onMouseEnter={() => handleDateHover(date)}
-          onMouseLeave={handleDateHoverOut}
-        >
-          {highlight.content}
-        </div>
-      );
-    }
+  if (highlight) {
+    return (
+      <div 
+        className={`calendar-tile-content ${highlight.className}`}
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: highlight.backgroundColor,
+          borderRadius: '8px',
+          opacity: 0.85,
+          zIndex: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}
+        title={highlight.tooltip}
+        onMouseEnter={() => handleDateHover(date)}
+        onMouseLeave={handleDateHoverOut}
+      >
+        {/* Optionally add a small dot or indicator for converted leaves */}
+        {highlight.hasIndicator && (
+          <span style={{
+            position: 'absolute',
+            bottom: '2px',
+            right: '2px',
+            fontSize: '8px'
+          }}>
+            ⚡
+          </span>
+        )}
+      </div>
+    );
+  }
 
     return (
       <div 
@@ -815,6 +888,34 @@ const EmployeeLeavePage = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+
+  //   //  Handle file input
+  // if (name === "medicalCertificate" && files && files[0]) {
+  //   const file = files[0];
+    
+  //   // Validate file type
+  //   const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
+  //   if (!allowedTypes.includes(file.type)) {
+  //     setErrorMsg("❌ Please upload JPEG, PNG, or PDF file only");
+  //     return;
+  //   }
+    
+  //   // Validate file size (max 2MB)
+  //   if (file.size > 2 * 1024 * 1024) {
+  //     setErrorMsg("❌ File size should be less than 2MB");
+  //     return;
+  //   }
+    
+  //   setMedicalFile(file);
+  //   setMedicalFileName(file.name);
+  //   setNewLeave({ 
+  //     ...newLeave, 
+  //     medicalCertificate: file,
+  //     medicalCertificateName: file.name 
+  //   });
+  //   setErrorMsg("");
+  //   return;
+  // }
     
     // STRICTER VALIDATION: Don't allow weekend selection at all
     if (name === "startDate" || name === "endDate") {
@@ -828,6 +929,11 @@ const EmployeeLeavePage = () => {
     } else {
       setNewLeave({ ...newLeave, [name]: value });
     }
+  };
+
+  const handleMedicalDocumentChange = (e) => {
+    const file = e.target.files && e.target.files[0] ? e.target.files[0] : null;
+    setMedicalDocument(e.target.files[0]);
   };
 
   // NEW: Calculate leave duration
@@ -1110,57 +1216,72 @@ const EmployeeLeavePage = () => {
                       />
                     </div>
                     
-                    {/* Legends moved below the calendar */}
-                    <div className="mt-4">
-                      <h6 className="fw-bold mb-3 text-dark">📊 Calendar Legend</h6>
-                      <div className="row g-3">
-                        <div className="col-md-12">
-                          <div className="card border-0 bg-light h-100">
-                            <div className="card-body py-3">
-                              <h6 className="fw-semibold text-muted mb-3">Leave Status & Holidays:</h6>
-                              <div className="row g-2">
-                                <div className="col-6">
-                                  <div className="d-flex align-items-center mb-2">
-                                    <span className="badge bg-success me-2">✓</span>
-                                    <small className="text-muted">Approved Leave</small>
-                                  </div>
-                                  <div className="d-flex align-items-center mb-2">
-                                    <span className="badge bg-warning me-2">?</span>
-                                    <small className="text-muted">Pending Leave</small>
-                                  </div>
-                                  <div className="d-flex align-items-center mb-2">
-                                    <span className="badge bg-danger me-2">✗</span>
-                                    <small className="text-muted">Rejected Leave</small>
-                                  </div>
-                                  <div className="d-flex align-items-center mb-2">
-                                    <span className="badge bg-secondary me-2">✕</span>
-                                    <small className="text-muted">Cancelled Leave</small>
-                                  </div>
-                                </div>
-                                <div className="col-6">
-                                  <div className="d-flex align-items-center mb-2">
-                                    <span className="badge bg-primary me-2">🏠</span>
-                                    <small className="text-muted">WFH Approved</small>
-                                  </div>
-                                  <div className="d-flex align-items-center mb-2">
-                                    <span className="badge bg-purple me-2">🏠?</span>
-                                    <small className="text-muted">WFH Pending</small>
-                                  </div>
-                                  <div className="d-flex align-items-center mb-2">
-                                    <span className="badge bg-info me-2">🎉</span>
-                                    <small className="text-muted">Public Holiday</small>
-                                  </div>
-                                  <div className="d-flex align-items-center mb-2">
-                                    <span className="badge bg-warning text-dark me-2">💰?</span>
-                                    <small className="text-muted">Paid Leave Pending</small>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+            {/* Legends moved below the calendar */}
+<div className="mt-4">
+  <h6 className="fw-bold mb-3 text-dark">📊 Calendar Legend</h6>
+  <div className="row g-3">
+    <div className="col-md-12">
+      <div className="card border-0 bg-light h-100">
+        <div className="card-body py-3">
+          <h6 className="fw-semibold text-muted mb-3">Leave Status & Holidays:</h6>
+          <div className="row g-2">
+            <div className="col-md-6">
+              {/* Approved Leave */}
+              <div className="d-flex align-items-center mb-2">
+                <div className="me-2" style={{width: '24px', height: '24px', backgroundColor: '#28a745', borderRadius: '4px'}}></div>
+                <small className="text-muted">Approved Leave</small>
+              </div>
+              
+              {/* Pending Leave */}
+              <div className="d-flex align-items-center mb-2">
+                <div className="me-2" style={{width: '24px', height: '24px', backgroundColor: '#ffc107', borderRadius: '4px'}}></div>
+                <small className="text-muted">Pending Leave</small>
+              </div>
+              
+              {/* Rejected Leave */}
+              <div className="d-flex align-items-center mb-2">
+                <div className="me-2" style={{width: '24px', height: '24px', backgroundColor: '#dc3545', borderRadius: '4px'}}></div>
+                <small className="text-muted">Rejected Leave</small>
+              </div>
+              
+              {/* Cancelled Leave */}
+              <div className="d-flex align-items-center mb-2">
+                <div className="me-2" style={{width: '24px', height: '24px', backgroundColor: '#6c757d', borderRadius: '4px'}}></div>
+                <small className="text-muted">Cancelled Leave</small>
+              </div>
+            </div>
+            
+            <div className="col-md-6">
+              {/* WFH Approved */}
+              <div className="d-flex align-items-center mb-2">
+                <div className="me-2" style={{width: '24px', height: '24px', backgroundColor: '#6f42c1', borderRadius: '4px'}}></div>
+                <small className="text-muted">WFH Approved</small>
+              </div>
+              
+              {/* WFH Pending */}
+              <div className="d-flex align-items-center mb-2">
+                <div className="me-2" style={{width: '24px', height: '24px', backgroundColor: '#9b59b6', borderRadius: '4px'}}></div>
+                <small className="text-muted">WFH Pending</small>
+              </div>
+              
+              {/* Public Holiday */}
+              <div className="d-flex align-items-center mb-2">
+                <div className="me-2" style={{width: '24px', height: '24px', backgroundColor: '#17a2b8', borderRadius: '4px'}}></div>
+                <small className="text-muted">Public Holiday</small>
+              </div>
+              
+              {/* Paid Leave Pending */}
+              <div className="d-flex align-items-center mb-2">
+                <div className="me-2" style={{width: '24px', height: '24px', backgroundColor: '#20c997', borderRadius: '4px'}}></div>
+                <small className="text-muted">Paid Leave Pending</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
                   </div>
                   <div className="col-lg-4">
                     <div className="card border-0 h-100 bg-light">
