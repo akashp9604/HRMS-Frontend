@@ -53,6 +53,7 @@ export default function Sidebar() {
                 💰 Payroll
               </Link>
             </li>
+
             {/* Reports tab removed for admin */}
           </>
         )}
@@ -75,11 +76,13 @@ export default function Sidebar() {
         )}
 
         {/* COMMON MENU ITEMS (Visible to all roles) */}
-        <li className="nav-item mb-2">
-          <Link className="nav-link text-white" to="/profile">
-            👤 Profile
-          </Link>
-        </li>
+        {/* <li className="nav-item mb-2">
+           <Link className="nav-link text-white" to="/profile" >
+             👤 Profile
+           </Link> 
+      
+        </li> */}
+
       </ul>
 
       {/* User info footer */}
