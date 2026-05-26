@@ -13,8 +13,8 @@ const OfferAcceptancePage = () => {
     const [employeeData, setEmployeeData] = useState(null);
 
     const getAuthHeader = () => {
-        const username = "ruchissonawane30@gmail.com";
-        const password = "Ruchi@123";
+        const username = "admin@gmail.com";
+        const password = "Admin@123";
         return "Basic " + btoa(`${username}:${password}`);
     };
 
