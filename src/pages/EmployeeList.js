@@ -126,6 +126,7 @@ export default function EmployeeList() {
             <th>Join Date</th>
             <th>Actions</th>
           </tr>
+          
         </thead>
         <tbody>
           {currentEmployees.length > 0 ? (
@@ -161,15 +162,34 @@ export default function EmployeeList() {
                   </span>
                 </td>
                 <td>{emp.dateOfJoining}</td>
-                <td>
-                  {/* Only Edit and Delete buttons - View button removed */}
+                
+
+                <td style={{ whiteSpace: "nowrap" }}>
+  <div className="d-flex gap-2">
+    <button
+      className="btn btn-sm btn-warning"
+      onClick={() => handleEdit(emp)}
+    >
+      Edit
+    </button>
+
+    <button
+      className="btn btn-sm btn-danger"
+      onClick={() => handleDelete(emp.id)}
+    >
+      Delete
+    </button>
+  </div>
+</td>
+                
+                  {/* Only Edit and Delete buttons - View button removed
                   <button className="btn btn-sm btn-warning me-2" onClick={() => handleEdit(emp)}>
                     Edit
                   </button>
                   <button className="btn btn-sm btn-danger" onClick={() => handleDelete(emp.id)}>
                     Delete
                   </button>
-                </td>
+                </td> */}
               </tr>
             ))
           ) : (
