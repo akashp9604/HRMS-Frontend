@@ -1,9 +1,11 @@
-import React, { useEffect, useState } from "react";
-import axios from "axios";
+import React, { useEffect, useState, useContext } from "react";
+import axiosInstance from "../apis/axiosConfig";
 import StatCard from "../components/StatCard";
 import { useNavigate } from "react-router-dom";
+import { AuthContext } from "../context/AuthContext";
 
 export default function Dashboard() {
+  const { user } = useContext(AuthContext);
   const [employeeCount, setEmployeeCount] = useState(0);
   const [monthlyPayroll, setMonthlyPayroll] = useState(0);
   const [pendingLeaves, setPendingLeaves] = useState(0);
@@ -12,102 +14,94 @@ export default function Dashboard() {
     present: 0,
     absent: 0
   });
+  const [loading, setLoading] = useState(true);
+  const [showWelcomeAlert, setShowWelcomeAlert] = useState(true); // ✅ Add this
 
   const navigate = useNavigate();
 
-  // ✅ Common Auth Setup
-  const getAuthHeader = () => {
-    const authUser = JSON.parse(localStorage.getItem("authUser"));
-    if (!authUser) {
-      console.error("No auth user found. Please log in again.");
-      return {};
-    }
-    const { username, password } = authUser;
-    return { Authorization: "Basic " + btoa(`${username}:${password}`) };
-  };
-
-  // ✅ Fetch Total Employees
+  // ✅ Fetch Total Employees with JWT
   useEffect(() => {
-    const headers = getAuthHeader();
-    if (!headers.Authorization) return;
-
-    axios
-      .get("http://localhost:8088/api/employees/count", { headers })
-      .then((response) => {
+    const fetchEmployeeCount = async () => {
+      try {
+        const response = await axiosInstance.get("http://localhost:8088/api/employees/count");
         const count = typeof response.data === "object" ? response.data.count : response.data;
         setEmployeeCount(count);
-      })
-      .catch((error) => {
+      } catch (error) {
         console.error("Error fetching employee count:", error.response || error);
-      });
-  }, []);
+        if (error.response?.status === 401) {
+          navigate("/login");
+        }
+      }
+    };
+    
+    fetchEmployeeCount();
+  }, [navigate]);
 
-  // ✅ Fetch Monthly Payroll
+  // ✅ Fetch Monthly Payroll with JWT
   useEffect(() => {
-    const headers = getAuthHeader();
-    if (!headers.Authorization) return;
+    const fetchMonthlyPayroll = async () => {
+      try {
+        const now = new Date();
+        const month = now.getMonth() + 1;
+        const year = now.getFullYear();
 
-    const now = new Date();
-    const month = now.getMonth() + 1; // JS months are 0-based
-    const year = now.getFullYear();
-
-    axios
-      .get(`http://localhost:8089/api/payroll/total-payroll?month=${month}&year=${year}`, {
-        headers,
-      })
-      .then((response) => {
-        // backend likely returns a number or object like { totalPayroll: 123456 }
+        const response = await axiosInstance.get(
+          `http://localhost:8089/api/payroll/total-payroll?month=${month}&year=${year}`
+        );
         const total = typeof response.data === "object" ? response.data.totalPayroll : response.data;
-        setMonthlyPayroll(total);
-      })
-      .catch((error) => {
+        setMonthlyPayroll(total || 0);
+      } catch (error) {
         console.error("Error fetching monthly payroll:", error.response || error);
-      });
+        setMonthlyPayroll(0);
+      }
+    };
+    
+    fetchMonthlyPayroll();
   }, []);
 
-  // ✅ Fetch Pending Leaves Count
+  // ✅ Fetch Pending Leaves Count with JWT
   useEffect(() => {
-    const headers = getAuthHeader();
-    if (!headers.Authorization) return;
-
-    axios
-      .get("http://localhost:8087/api/leaves/pending/count", { headers })
-      .then((response) => {
+    const fetchPendingLeaves = async () => {
+      try {
+        const response = await axiosInstance.get("http://localhost:8087/api/leaves/pending/count");
         const count = typeof response.data === "object" ? response.data.count : response.data;
-        setPendingLeaves(count);
-      })
-      .catch((error) => {
+        setPendingLeaves(count || 0);
+      } catch (error) {
         console.error("Error fetching pending leaves count:", error.response || error);
-      });
+        setPendingLeaves(0);
+      }
+    };
+    
+    fetchPendingLeaves();
   }, []);
 
-  // ✅ Fetch Total Payslip Count
+  // ✅ Fetch Total Payslip Count with JWT
   useEffect(() => {
-    const headers = getAuthHeader();
-    if (!headers.Authorization) return;
-
-    axios
-      .get("http://localhost:8089/api/payroll/payslip/count", { headers })
-      .then((response) => {
+    const fetchPayslipCount = async () => {
+      try {
+        const response = await axiosInstance.get("http://localhost:8089/api/payroll/payslip/count");
         const count = typeof response.data === "object" ? response.data.count : response.data;
-        setPayslipCount(count);
-      })
-      .catch((error) => {
+        setPayslipCount(count || 0);
+      } catch (error) {
         console.error("Error fetching payslip count:", error.response || error);
-      });
+        setPayslipCount(0);
+      }
+    };
+    
+    fetchPayslipCount();
   }, []);
 
-  // ✅ Fetch Attendance Summary (Present/Absent Count)
+  // ✅ Fetch Attendance Summary with JWT
   useEffect(() => {
-    const headers = getAuthHeader();
-    if (!headers.Authorization) return;
+    const fetchAttendanceSummary = async () => {
+      try {
+        const today = new Date();
+        const dateString = today.toISOString().split("T")[0];
 
-    const today = new Date();
-    const dateString = today.toISOString().split("T")[0];
-
-    axios
-      .get(`http://localhost:8085/api/attendance/present-absent-summary?date=${dateString}`, { headers })
-      .then((response) => {
+        const response = await axiosInstance.get(
+          `http://localhost:8085/api/attendance/present-absent-summary?date=${dateString}`
+        );
+        
         console.log("Attendance API Response:", response.data);
 
         const data = response.data;
@@ -115,11 +109,15 @@ export default function Dashboard() {
           present: data.totalPresent ?? data.present ?? 0,
           absent: data.totalAbsent ?? data.absent ?? 0,
         });
-      })
-      .catch((error) => {
+      } catch (error) {
         console.error("Error fetching attendance summary:", error.response || error);
         setAttendanceSummary({ present: 0, absent: 0 });
-      });
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchAttendanceSummary();
   }, []);
 
   // Quick Actions Handlers
@@ -142,8 +140,35 @@ export default function Dashboard() {
     }
   };
 
+  // Show loading spinner while fetching data
+  if (loading) {
+    return (
+      <div className="d-flex justify-content-center align-items-center vh-100">
+        <div className="text-center">
+          <div className="spinner-border text-primary" role="status" style={{ width: "3rem", height: "3rem" }}>
+            <span className="visually-hidden">Loading...</span>
+          </div>
+          <p className="mt-3 text-muted">Loading dashboard data...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="container mt-4">
+      {/* Welcome Banner */}
+      {user && showWelcomeAlert && (
+        <div className="alert alert-info alert-dismissible fade show mb-4" role="alert">
+          <strong>Welcome back, {user.name || user.email}! 👋</strong> Here's your HR dashboard overview.
+          <button 
+            type="button" 
+            className="btn-close" 
+            data-bs-dismiss="alert"
+            onClick={() => setShowWelcomeAlert(false)}
+          ></button>
+        </div>
+      )}
+
       {/* Stats Row */}
       <div className="row mb-4">
         <div className="col-md-3">

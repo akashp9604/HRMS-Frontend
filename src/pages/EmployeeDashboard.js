@@ -1,8 +1,10 @@
-import React, { useEffect, useState } from "react";
-import axios from "axios";
+import React, { useEffect, useState, useContext } from "react";
+import axiosInstance from "../apis/axiosConfig"; // ✅ JWT axios instance
 import StatCard from "../components/StatCard";
+import { AuthContext } from "../context/AuthContext";
 
 export default function EmployeeDashboard() {
+  const { user } = useContext(AuthContext); // ✅ Get user from JWT context
   const [leaveStats, setLeaveStats] = useState({
     approvedLeaves: 0,
     pendingLeaves: 0,
@@ -28,9 +30,9 @@ export default function EmployeeDashboard() {
   const [attendanceLoading, setAttendanceLoading] = useState(true);
   const [selectedMonthYear, setSelectedMonthYear] = useState("");
 
-  const employee = JSON.parse(localStorage.getItem("employee"));
-  const employeeId = employee?.employeeId;
-  const employeeName = employee?.employeeName;
+  // ✅ Get employee info from JWT context instead of localStorage
+  const employeeId = user?.id || user?.employeeId;
+  const employeeName = user?.name || user?.employeeName;
 
   useEffect(() => {
     const currentDate = new Date();
@@ -40,29 +42,20 @@ export default function EmployeeDashboard() {
     setSelectedMonthYear(defaultMonthYear);
   }, []);
 
-  const getAuthHeader = () => {
-    const authUser = JSON.parse(localStorage.getItem("authUser"));
-    if (!authUser) return {};
-    const { username, password } = authUser;
-    return { Authorization: "Basic " + btoa(`${username}:${password}`) };
-  };
-
-  // Fetch Leave Stats
+  // ✅ Fetch Leave Stats with JWT
   useEffect(() => {
     if (!employeeId) { setLoading(false); return; }
-    const headers = getAuthHeader();
 
     const fetchEmployeeData = async () => {
       try {
         setLoading(true);
-        const balanceResponse = await axios.get(
-          `http://localhost:8087/api/leaves/leave-balance/${employeeId}`,
-          { headers }
-        );
-        const leavesResponse = await axios.get(
-          `http://localhost:8087/api/leaves/employee/${employeeId}`,
-          { headers }
-        );
+        
+        // ✅ Use axiosInstance instead of axios with headers
+        const [balanceResponse, leavesResponse] = await Promise.all([
+          axiosInstance.get(`http://localhost:8087/api/leaves/leave-balance/${employeeId}`),
+          axiosInstance.get(`http://localhost:8087/api/leaves/employee/${employeeId}`)
+        ]);
+        
         const leaves = leavesResponse.data || [];
         const approvedLeaves = leaves.filter(l => l.status === 'APPROVED').length;
         const pendingLeaves = leaves.filter(l => l.status === 'PENDING').length;
@@ -70,6 +63,7 @@ export default function EmployeeDashboard() {
         const leaveBalance = Object.values(balanceResponse.data || {}).reduce(
           (sum, balance) => sum + (Number(balance) || 0), 0
         );
+        
         setLeaveStats({ approvedLeaves, pendingLeaves, totalRequests, leaveBalance });
       } catch (error) {
         console.error("Error fetching leave data:", error);
@@ -81,9 +75,12 @@ export default function EmployeeDashboard() {
     fetchEmployeeData();
   }, [employeeId]);
 
-  // Fetch Monthly Attendance Summary + Daily Records
+  // ✅ Fetch Monthly Attendance Summary with JWT
   useEffect(() => {
-    if (!employeeId || !selectedMonthYear) { setAttendanceLoading(false); return; }
+    if (!employeeId || !selectedMonthYear) { 
+      setAttendanceLoading(false); 
+      return; 
+    }
 
     const fetchMonthlyAttendance = async () => {
       try {
@@ -93,7 +90,8 @@ export default function EmployeeDashboard() {
           month: selectedMonthYear
         });
 
-        const response = await axios.get(
+        // ✅ Use axiosInstance instead of axios
+        const response = await axiosInstance.get(
           `http://localhost:8085/api/attendance/employee/${employeeId}/monthly-summary`,
           {
             params: {
@@ -101,8 +99,6 @@ export default function EmployeeDashboard() {
             }
           }
         );
-
-        console.log("RAW API RESPONSE:", JSON.stringify(response.data, null, 2)); 
 
         console.log("✅ Monthly Attendance Response:", response.data);
 
@@ -216,12 +212,12 @@ export default function EmployeeDashboard() {
                   <div className="d-flex align-items-center justify-content-md-end gap-2">
                     <div className="bg-light rounded px-2 py-3">
                       <label
-  htmlFor="monthYearSelect"
-  className="form-label text-primary mb-0 small fw-bold"
-  style={{ paddingRight: "30px" }}
->
-  📅 Select Month
-</label>
+                        htmlFor="monthYearSelect"
+                        className="form-label text-primary mb-0 small fw-bold"
+                        style={{ paddingRight: "30px" }}
+                      >
+                        📅 Select Month
+                      </label>
                       <select
                         id="monthYearSelect"
                         className="form-select form-select-sm bg-white text-dark fw-bold border-primary"
@@ -308,8 +304,6 @@ export default function EmployeeDashboard() {
           </div>
         </div>
       </div>
-
-   
 
       {/* Leave Management Overview */}
       <div className="row mb-4">

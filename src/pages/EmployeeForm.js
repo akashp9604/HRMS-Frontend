@@ -24,6 +24,7 @@ export default function EmployeeForm({ existingData, onSuccess }) {
 
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const departments = ["Engineering", "IT", "HR", "Finance", "Marketing", "Sales"];
   const roles = ["EMPLOYEE", "MANAGER", "HR", "ADMIN"];
@@ -35,7 +36,7 @@ export default function EmployeeForm({ existingData, onSuccess }) {
     }
   }, [existingData]);
 
-  // ✅ Validation rules
+  // ✅ Validation rules for individual fields
   const validateField = (name, value) => {
     const newErrors = { ...errors };
 
@@ -94,23 +95,22 @@ export default function EmployeeForm({ existingData, onSuccess }) {
         }
         break;
 
-     case "annualSalary":
-    const cleanedValue = value.toString().replace(/[^0-9.]/g, "");
-    const num = parseFloat(cleanedValue);
+      case "annualSalary":
+        const cleanedValue = value.toString().replace(/[^0-9.]/g, "");
+        const num = parseFloat(cleanedValue);
 
-    if (!cleanedValue) {
-        newErrors.annualSalary = "Annual salary is required";
-    } else if (isNaN(num) || num <= 0) {
-        newErrors.annualSalary = "Annual salary must be a positive number";
-    } else if (num < 10000) {
-        newErrors.annualSalary = "Annual salary must be at least ₹10,000";
-    } else if (num > 100000000) {
-        newErrors.annualSalary = "Annual salary cannot exceed ₹10,00,00,000";
-    } else {
-        delete newErrors.annualSalary;
-    }
-    break;
-
+        if (!cleanedValue) {
+          newErrors.annualSalary = "Annual salary is required";
+        } else if (isNaN(num) || num <= 0) {
+          newErrors.annualSalary = "Annual salary must be a positive number";
+        } else if (num < 10000) {
+          newErrors.annualSalary = "Annual salary must be at least ₹10,000";
+        } else if (num > 100000000) {
+          newErrors.annualSalary = "Annual salary cannot exceed ₹10,00,00,000";
+        } else {
+          delete newErrors.annualSalary;
+        }
+        break;
 
       case "dateOfJoining":
         if (!value) {
@@ -176,85 +176,10 @@ export default function EmployeeForm({ existingData, onSuccess }) {
     return Object.keys(newErrors).length === 0;
   };
 
-  // ✅ Validate entire form
-  const validateForm = () => {
-    const newErrors = {};
-
-    // Required fields validation
-    if (!form.name.trim()) newErrors.name = "Full name is required";
-    if (!form.email) newErrors.email = "Email is required";
-    if (!form.designation.trim()) newErrors.designation = "Designation is required";
-    if (!form.department) newErrors.department = "Department is required";
-    if (!form.role) newErrors.role = "Role is required";
-    if (!form.annualSalary) newErrors.annualSalary = "Annual salary is required";
-    if (!form.dateOfJoining) newErrors.dateOfJoining = "Date of joining is required";
-
-    // Email format validation
-    if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
-      newErrors.email = "Please enter a valid email address";
-    }
-
-    // Phone number validation
-    if (form.phoneNumber && !/^[6-9]\d{9}$/.test(form.phoneNumber.replace(/\D/g, ''))) {
-      newErrors.phoneNumber = "Please enter a valid 10-digit Indian phone number";
-    }
-
-    // Salary validation
-    if (form.annualSalary) {
-      const salary = parseFloat(form.annualSalary);
-      if (isNaN(salary) || salary <= 0) {
-        newErrors.annualSalary = "Annual salary must be a positive number";
-      } else if (salary < 10000) {
-        newErrors.annualSalary = "Annual salary must be at least ₹10,000";
-      } else if (salary > 100000000) {
-        newErrors.annualSalary = "Annual salary cannot exceed ₹10,00,00,000";
-      }
-    }
-
-    // Date validation
-    if (form.dateOfJoining) {
-      const selectedDate = new Date(form.dateOfJoining);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      if (selectedDate > today) {
-        newErrors.dateOfJoining = "Date of joining cannot be in the future";
-      }
-    }
-
-    // PAN validation
-    if (form.panNumber && !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(form.panNumber.toUpperCase())) {
-      newErrors.panNumber = "Please enter a valid PAN number (Format: ABCDE1234F)";
-    }
-
-    // PF validation
-    if (form.pfNumber && !/^[A-Z]{2}[A-Z]{3}\d{7}$/.test(form.pfNumber.toUpperCase())) {
-      newErrors.pfNumber = "Please enter a valid PF number (Format: XXYYY1234567)";
-    }
-
-    // UAN validation
-    if (form.uanNumber && !/^\d{12}$/.test(form.uanNumber)) {
-      newErrors.uanNumber = "UAN number must be exactly 12 digits";
-    }
-
-    // Bank account validation
-    if (form.bankAccountNumber && !/^\d{9,18}$/.test(form.bankAccountNumber)) {
-      newErrors.bankAccountNumber = "Bank account number must be 9-18 digits";
-    }
-
-    // Vendor code validation
-    if (form.vendorCode && !/^[A-Z0-9]{4,10}$/.test(form.vendorCode.toUpperCase())) {
-      newErrors.vendorCode = "Vendor code must be 4-10 alphanumeric characters";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm({ ...form, [name]: value });
 
-    // Validate field on change if it's been touched before
     if (touched[name]) {
       validateField(name, value);
     }
@@ -269,6 +194,10 @@ export default function EmployeeForm({ existingData, onSuccess }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    if (isSubmitting) {
+      return;
+    }
+    
     // Mark all fields as touched
     const allTouched = {};
     Object.keys(form).forEach(key => {
@@ -276,37 +205,111 @@ export default function EmployeeForm({ existingData, onSuccess }) {
     });
     setTouched(allTouched);
 
-    // Validate form
-    if (!validateForm()) {
+    // Create a fresh validation object
+    const validationErrors = {};
+
+    // Required fields validation
+    if (!form.name?.trim()) validationErrors.name = "Full name is required";
+    if (!form.email) validationErrors.email = "Email is required";
+    if (!form.designation?.trim()) validationErrors.designation = "Designation is required";
+    if (!form.department) validationErrors.department = "Department is required";
+    if (!form.role) validationErrors.role = "Role is required";
+    if (!form.annualSalary) validationErrors.annualSalary = "Annual salary is required";
+    if (!form.dateOfJoining) validationErrors.dateOfJoining = "Date of joining is required";
+
+    // Email format validation
+    if (form.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+      validationErrors.email = "Please enter a valid email address";
+    }
+
+    // Phone number validation
+    if (form.phoneNumber && !/^[6-9]\d{9}$/.test(form.phoneNumber.replace(/\D/g, ''))) {
+      validationErrors.phoneNumber = "Please enter a valid 10-digit Indian phone number";
+    }
+
+    // Salary validation
+    if (form.annualSalary) {
+      const salary = parseFloat(form.annualSalary);
+      if (isNaN(salary) || salary <= 0) {
+        validationErrors.annualSalary = "Annual salary must be a positive number";
+      } else if (salary < 10000) {
+        validationErrors.annualSalary = "Annual salary must be at least ₹10,000";
+      } else if (salary > 100000000) {
+        validationErrors.annualSalary = "Annual salary cannot exceed ₹10,00,00,000";
+      }
+    }
+
+    // Date validation
+    if (form.dateOfJoining) {
+      const selectedDate = new Date(form.dateOfJoining);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (selectedDate > today) {
+        validationErrors.dateOfJoining = "Date of joining cannot be in the future";
+      }
+    }
+
+    // PAN validation
+    if (form.panNumber && !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(form.panNumber.toUpperCase())) {
+      validationErrors.panNumber = "Please enter a valid PAN number (Format: ABCDE1234F)";
+    }
+
+    // PF validation
+    if (form.pfNumber && !/^[A-Z]{2}[A-Z]{3}\d{7}$/.test(form.pfNumber.toUpperCase())) {
+      validationErrors.pfNumber = "Please enter a valid PF number (Format: XXYYY1234567)";
+    }
+
+    // UAN validation
+    if (form.uanNumber && !/^\d{12}$/.test(form.uanNumber)) {
+      validationErrors.uanNumber = "UAN number must be exactly 12 digits";
+    }
+
+    // Bank account validation
+    if (form.bankAccountNumber && !/^\d{9,18}$/.test(form.bankAccountNumber)) {
+      validationErrors.bankAccountNumber = "Bank account number must be 9-18 digits";
+    }
+
+    // Vendor code validation
+    if (form.vendorCode && !/^[A-Z0-9]{4,10}$/.test(form.vendorCode.toUpperCase())) {
+      validationErrors.vendorCode = "Vendor code must be 4-10 alphanumeric characters";
+    }
+
+    setErrors(validationErrors);
+    
+    if (Object.keys(validationErrors).length > 0) {
       alert("Please fix the validation errors before submitting.");
       return;
     }
 
+    setIsSubmitting(true);
+    
     try {
       if (existingData) {
-        // ✅ Update employee
         await API.put(`/${existingData.id}`, form);
         alert("Employee updated successfully!");
       } else {
-        // ✅ Create employee
         await API.post("/create-manual", form);
         alert("Employee added successfully!");
       }
       if (onSuccess) onSuccess();
     } catch (err) {
       console.error("❌ Error saving employee:", err);
-
+      
+      let errorMessage = "An error occurred";
       if (err.response) {
-        alert("Failed: " + (err.response.data?.message || err.response.statusText));
+        errorMessage = err.response.data?.message || err.response.statusText;
       } else if (err.request) {
-        alert("Network error: Backend not reachable or CORS issue.");
+        errorMessage = "Network error: Backend not reachable";
       } else {
-        alert("Error: " + err.message);
+        errorMessage = err.message;
       }
+      alert(`Failed: ${errorMessage}`);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  // ✅ Helper function to format salary display
+  // Helper function to format salary display
   const formatSalary = (value) => {
     if (!value) return "";
     const num = parseFloat(value);
@@ -324,7 +327,6 @@ export default function EmployeeForm({ existingData, onSuccess }) {
     }
   };
 
-  // ✅ Helper function to format phone number
   const handlePhoneChange = (e) => {
     const value = e.target.value.replace(/\D/g, '').slice(0, 10);
     setForm({ ...form, phoneNumber: value });
@@ -334,7 +336,6 @@ export default function EmployeeForm({ existingData, onSuccess }) {
     }
   };
 
-  // ✅ Helper function to format PAN (uppercase)
   const handlePanChange = (e) => {
     const value = e.target.value.toUpperCase();
     setForm({ ...form, panNumber: value });
@@ -637,9 +638,9 @@ export default function EmployeeForm({ existingData, onSuccess }) {
         <button 
           type="submit" 
           className="btn btn-primary"
-          disabled={Object.keys(errors).length > 0}
+          disabled={isSubmitting}
         >
-          {existingData ? "Update Employee" : "Add Employee"}
+          {isSubmitting ? "Submitting..." : (existingData ? "Update Employee" : "Add Employee")}
         </button>
       </div>
     </form>

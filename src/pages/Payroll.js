@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import StatCard from "../components/StatCard";
+import axiosInstance from "../apis/axiosConfig"; // ✅ CHANGED: JWT import
 
 export default function Payroll() {
   // Real data states
@@ -54,12 +55,7 @@ export default function Payroll() {
     year: ""
   });
 
-  // ==================== FIXED AUTHENTICATION ====================
-  const getAuthHeader = () => {
-    const username = "admin@gmail.com";
-    const password = "Admin@123";
-    return "Basic " + btoa(`${username}:${password}`);
-  };
+  // ❌ REMOVED: getAuthHeader function - No longer needed
 
   // ==================== PAGINATION CALCULATIONS ====================
   // Payslips pagination
@@ -167,88 +163,65 @@ export default function Payroll() {
     setOfferLetterLoading({ type: 'download', employeeId: employeeId });
     
     try {
-      // ✅ FIRST: Check if offer is accepted
-      const statusResponse = await fetch(`http://localhost:8089/api/payroll/offer-letter/status/${employeeId}`, {
-        method: "GET",
-        headers: {
-          "Authorization": getAuthHeader(),
-        },
-      });
+      // ✅ CHANGED: Use axiosInstance with JWT
+      const statusResponse = await axiosInstance.get(`http://localhost:8089/api/payroll/offer-letter/status/${employeeId}`);
 
-      if (statusResponse.ok) {
-        const statusData = await statusResponse.json();
-        
-        if (!statusData.accepted) {
-          alert("❌ Offer must be accepted before downloading.\n\nPlease send the offer letter to the employee first and wait for them to accept it.");
-          return false;
-        }
+      if (statusResponse.data && !statusResponse.data.accepted) {
+        alert("❌ Offer must be accepted before downloading.\n\nPlease send the offer letter to the employee first and wait for them to accept it.");
+        return false;
       }
 
-      // ✅ Proceed with download if accepted
-      const url = `http://localhost:8089/api/payroll/offer-letter/download?employeeId=${employeeId}`;
-      console.log("📡 Calling offer letter download API:", url);
+      // ✅ CHANGED: Use axiosInstance with blob response
+      const response = await axiosInstance.get(
+        `http://localhost:8089/api/payroll/offer-letter/download`,
+        {
+          params: { employeeId: employeeId },
+          responseType: 'blob'
+        }
+      );
+
+      const blob = response.data;
       
-      const response = await fetch(url, {
-        method: "GET",
-        headers: {
-          "Authorization": getAuthHeader(),
-          "Accept": "application/pdf",
-        },
-      });
-
-      if (response.ok) {
-        const blob = await response.blob();
-        
-        if (blob.size === 0) {
-          throw new Error('Offer letter PDF is empty (0 bytes)');
-        }
-        
-        if (!blob.type.includes('pdf')) {
-          const text = await blob.text();
-          throw new Error('Server returned non-PDF response');
-        }
-        
-        const objectUrl = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = objectUrl;
-        
-        const filename = employeeName 
-          ? `offer_letter_${employeeName.replace(/\s+/g, '_')}.pdf`
-          : `offer_letter_${employeeId}.pdf`;
-        
-        link.download = filename;
-        link.style.display = 'none';
-        
-        document.body.appendChild(link);
-        link.click();
-        
-        setTimeout(() => {
-          document.body.removeChild(link);
-          window.URL.revokeObjectURL(objectUrl);
-        }, 100);
-        
-        alert("✅ Offer letter downloaded successfully!");
-        return true;
-      } else {
-        const errorText = await response.text();
-        
-        if (response.status === 403) {
-          alert("❌ Offer not accepted yet. Employee must accept the offer first.");
-        } else if (response.status === 404) {
-          alert("❌ Employee not found or offer letter data unavailable");
-        } else if (response.status === 400) {
-          alert(`❌ Bad request: ${errorText}`);
-        } else if (response.status === 500) {
-          alert("❌ Server error generating offer letter. Check server logs.");
-        } else {
-          alert(`❌ Error ${response.status}: ${errorText}`);
-        }
-        throw new Error(`Server error: ${response.status} - ${errorText}`);
+      if (blob.size === 0) {
+        throw new Error('Offer letter PDF is empty (0 bytes)');
       }
+      
+      if (!blob.type.includes('pdf')) {
+        const text = await blob.text();
+        throw new Error('Server returned non-PDF response');
+      }
+      
+      const objectUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = objectUrl;
+      
+      const filename = employeeName 
+        ? `offer_letter_${employeeName.replace(/\s+/g, '_')}.pdf`
+        : `offer_letter_${employeeId}.pdf`;
+      
+      link.download = filename;
+      link.style.display = 'none';
+      
+      document.body.appendChild(link);
+      link.click();
+      
+      setTimeout(() => {
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(objectUrl);
+      }, 100);
+      
+      alert("✅ Offer letter downloaded successfully!");
+      return true;
     } catch (error) {
       console.error("❌ Error downloading offer letter:", error);
       
-      if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+      if (error.response?.status === 403) {
+        alert("❌ Offer not accepted yet. Employee must accept the offer first.");
+      } else if (error.response?.status === 401) {
+        alert("❌ Session expired. Please login again.");
+      } else if (error.response?.status === 404) {
+        alert("❌ Employee not found or offer letter data unavailable");
+      } else if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
         alert("❌ Network error: Cannot connect to server. Please check:\n• Server is running on localhost:8089\n• CORS is enabled\n• Network connectivity");
       } else {
         alert("❌ Error downloading offer letter: " + error.message);
@@ -270,17 +243,11 @@ export default function Payroll() {
     let employeeEmail = "";
     
     try {
-      const employeeResponse = await fetch(`http://localhost:8088/api/employees/${employeeId}`, {
-        method: "GET",
-        headers: {
-          "Authorization": getAuthHeader(),
-          "Content-Type": "application/json",
-        },
-      });
+      // ✅ CHANGED: Use axiosInstance with JWT
+      const employeeResponse = await axiosInstance.get(`http://localhost:8088/api/employees/${employeeId}`);
 
-      if (employeeResponse.ok) {
-        const employeeData = await employeeResponse.json();
-        employeeEmail = employeeData.email || "";
+      if (employeeResponse.data) {
+        employeeEmail = employeeResponse.data.email || "";
         console.log("✅ Found employee email:", employeeEmail);
       }
     } catch (error) {
@@ -307,43 +274,29 @@ export default function Payroll() {
     setOfferLetterLoading({ type: 'send', employeeId: employeeId });
     
     try {
-      // ✅ STEP 4: Use the /send endpoint (sends ONLY acceptance link)
-      const url = `http://localhost:8089/api/payroll/offer-letter/send`;
-      console.log("📡 Calling send offer letter API:", url);
-      
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Authorization": getAuthHeader(),
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
+      // ✅ CHANGED: Use axiosInstance with JWT
+      const response = await axiosInstance.post(
+        `http://localhost:8089/api/payroll/offer-letter/send`,
+        {
           employeeId: employeeId,
           employeeEmail: employeeEmail,
           employeeName: employeeName
-        }),
-      });
-
-      if (response.ok) {
-        const result = await response.json();
-        console.log("✅ Offer letter sent successfully:", result);
-        
-        if (result.success) {
-          // ✅ UPDATED MESSAGE: Now only acceptance link is sent initially
-          alert(`✅ Offer letter sent successfully to ${employeeEmail}!\n\n📧 The email includes:\n• ✅ Accept Offer Online (Required first step)\n• 📥 After acceptance: Direct download link will be sent\n\n🔗 Employee must accept offer first to download the PDF`);
-        } else {
-          alert("⚠️ Offer sending completed but with issues: " + (result.message || "Unknown issue"));
         }
+      );
+
+      if (response.data && response.data.success) {
+        alert(`✅ Offer letter sent successfully to ${employeeEmail}!\n\n📧 The email includes:\n• ✅ Accept Offer Online (Required first step)\n• 📥 After acceptance: Direct download link will be sent\n\n🔗 Employee must accept offer first to download the PDF`);
         return true;
       } else {
-        const errorText = await response.text();
-        alert(`❌ Failed to send offer letter: ${errorText}`);
+        alert("⚠️ Offer sending completed but with issues: " + (response.data?.message || "Unknown issue"));
         return false;
       }
     } catch (error) {
       console.error("❌ Error sending offer letter:", error);
       
-      if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+      if (error.response?.status === 401) {
+        alert("❌ Session expired. Please login again.");
+      } else if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
         alert("❌ Network error: Cannot connect to server. Please check if server is running on localhost:8089");
       } else {
         alert("❌ Error sending offer letter: " + error.message);
@@ -368,43 +321,36 @@ export default function Payroll() {
 
       console.log("🔍 Creating annual structure for employee:", employeeId);
       
-      const response = await fetch(
-        `http://localhost:8089/api/payroll/annual-structure?employeeId=${employeeId}`, 
+      // ✅ CHANGED: Use axiosInstance with JWT
+      const response = await axiosInstance.post(
+        `http://localhost:8089/api/payroll/annual-structure`,
+        null,
         {
-          method: "POST",
-          headers: {
-            "Authorization": getAuthHeader(),
-            "Content-Type": "application/json",
-          },
+          params: { employeeId: employeeId }
         }
       );
 
-      console.log("📊 Response status:", response.status);
-      
-      if (response.ok) {
-        const result = await response.json();
-        console.log("✅ Annual structure created:", result);
-        alert("✅ Annual salary structure created successfully!");
-        setShowAnnualModal(false);
-        resetAnnualForm();
-        fetchAnnualStructures();
-      } else {
-        const errorText = await response.text();
-        console.error("❌ Server error:", response.status, errorText);
-        
-        if (response.status === 404) {
-          alert("❌ Employee not found. Please check the Employee ID.");
-        } else if (response.status === 400) {
-          alert(`❌ Bad request: ${errorText}`);
-        } else if (response.status === 500) {
-          alert("❌ Server error. Please check if all services are running.");
-        } else {
-          alert(`❌ Error: ${response.status} - ${errorText}`);
-        }
-      }
+      console.log("✅ Annual structure created:", response.data);
+      alert("✅ Annual salary structure created successfully!");
+      setShowAnnualModal(false);
+      resetAnnualForm();
+      fetchAnnualStructures();
     } catch (error) {
-      console.error("🚨 Network error creating annual structure:", error);
-      alert("❌ Network error. Please check if payroll service is running on port 8089.");
+      console.error("🚨 Error creating annual structure:", error);
+      
+      if (error.response?.status === 401) {
+        alert("❌ Session expired. Please login again.");
+      } else if (error.response?.status === 404) {
+        alert("❌ Employee not found. Please check the Employee ID.");
+      } else if (error.response?.status === 400) {
+        alert(`❌ Bad request: ${error.response?.data?.message || error.message}`);
+      } else if (error.response?.status === 500) {
+        alert("❌ Server error. Please check if all services are running.");
+      } else if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+        alert("❌ Network error. Please check if payroll service is running on port 8089.");
+      } else {
+        alert(`❌ Error: ${error.message}`);
+      }
     } finally {
       setActionLoading(false);
     }
@@ -421,86 +367,73 @@ export default function Payroll() {
       setLoading(true);
       try {
         const employeeId = annualFormData.employeeId.trim();
-        const url = `http://localhost:8088/api/employees/${employeeId}/package`;
         
-        console.log("🔍 Fetching employee data from:", url);
+        // ✅ CHANGED: Use axiosInstance with JWT
+        const response = await axiosInstance.get(`http://localhost:8088/api/employees/${employeeId}/package`);
 
-        const response = await fetch(url, {
-          method: "GET",
-          headers: {
-            "Authorization": getAuthHeader(),
-            "Content-Type": "application/json",
-          },
-        });
-
-        console.log("📊 Employee API Response status:", response.status);
-
-        if (response.ok) {
-          const employee = await response.json();
-          console.log("✅ Employee data received:", employee);
-          setEmployeeData(employee);
-          
-          const annualSalary = employee.annualSalary || 0;
-          
-          if (annualSalary <= 0) {
-            alert("⚠️ Employee has no annual salary set. Please update employee data.");
-            return;
-          }
-
-          // Calculate salary components
-          const monthlyCtc = annualSalary / 12;
-          const monthlyBasic = monthlyCtc * 0.40;
-          const monthlyHra = monthlyBasic * 0.40;
-          const pending = monthlyCtc - (monthlyBasic + monthlyHra);
-          const employerPf = monthlyBasic * 0.12;
-          const gratuity = monthlyBasic * 0.0486;
-          const monthlySpecialComponent = pending - employerPf - gratuity;
-          const monthlyGross = monthlyBasic + monthlyHra + monthlySpecialComponent;
-          const employeePf = monthlyBasic * 0.12;
-          const professionalTax = 200.0;
-          const monthlyDeductions = employeePf + professionalTax;
-          const monthlyNet = monthlyGross - monthlyDeductions;
-          
-          // Convert to annual
-          const annualBasic = monthlyBasic * 12;
-          const annualHra = monthlyHra * 12;
-          const annualAllowances = monthlySpecialComponent * 12;
-          const annualGross = monthlyGross * 12;
-          const annualNet = monthlyNet * 12;
-
-          // Auto-fill form
-          setAnnualFormData(prev => ({
-            ...prev,
-            employeeName: employee.name || "",
-            designation: employee.designation || "",
-            annualSalary: annualSalary.toString(),
-            annualBasic: Math.round(annualBasic).toString(),
-            annualHra: Math.round(annualHra).toString(),
-            annualAllowances: Math.round(annualAllowances).toString(),
-            annualGross: Math.round(annualGross).toString(),
-            annualNet: Math.round(annualNet).toString(),
-            monthlyBasic: Math.round(monthlyBasic).toString(),
-            monthlyHra: Math.round(monthlyHra).toString(),
-            monthlyAllowances: Math.round(monthlySpecialComponent).toString(),
-            monthlyGross: Math.round(monthlyGross).toString(),
-            monthlyNet: Math.round(monthlyNet).toString()
-          }));
-
-        } else {
-          const errorText = await response.text();
-          console.error("❌ Employee API Error:", response.status, errorText);
-          setEmployeeData(null);
-          
-          if (response.status === 404) {
-            alert(`❌ Employee not found with ID: ${employeeId}`);
-          } else {
-            alert(`❌ Error fetching employee: ${response.status} - ${errorText}`);
-          }
+        const employee = response.data;
+        console.log("✅ Employee data received:", employee);
+        setEmployeeData(employee);
+        
+        const annualSalary = employee.annualSalary || 0;
+        
+        if (annualSalary <= 0) {
+          alert("⚠️ Employee has no annual salary set. Please update employee data.");
+          return;
         }
+
+        // Calculate salary components
+        const monthlyCtc = annualSalary / 12;
+        const monthlyBasic = monthlyCtc * 0.40;
+        const monthlyHra = monthlyBasic * 0.40;
+        const pending = monthlyCtc - (monthlyBasic + monthlyHra);
+        const employerPf = monthlyBasic * 0.12;
+        const gratuity = monthlyBasic * 0.0486;
+        const monthlySpecialComponent = pending - employerPf - gratuity;
+        const monthlyGross = monthlyBasic + monthlyHra + monthlySpecialComponent;
+        const employeePf = monthlyBasic * 0.12;
+        const professionalTax = 200.0;
+        const monthlyDeductions = employeePf + professionalTax;
+        const monthlyNet = monthlyGross - monthlyDeductions;
+        
+        // Convert to annual
+        const annualBasic = monthlyBasic * 12;
+        const annualHra = monthlyHra * 12;
+        const annualAllowances = monthlySpecialComponent * 12;
+        const annualGross = monthlyGross * 12;
+        const annualNet = monthlyNet * 12;
+
+        // Auto-fill form
+        setAnnualFormData(prev => ({
+          ...prev,
+          employeeName: employee.name || "",
+          designation: employee.designation || "",
+          annualSalary: annualSalary.toString(),
+          annualBasic: Math.round(annualBasic).toString(),
+          annualHra: Math.round(annualHra).toString(),
+          annualAllowances: Math.round(annualAllowances).toString(),
+          annualGross: Math.round(annualGross).toString(),
+          annualNet: Math.round(annualNet).toString(),
+          monthlyBasic: Math.round(monthlyBasic).toString(),
+          monthlyHra: Math.round(monthlyHra).toString(),
+          monthlyAllowances: Math.round(monthlySpecialComponent).toString(),
+          monthlyGross: Math.round(monthlyGross).toString(),
+          monthlyNet: Math.round(monthlyNet).toString()
+        }));
+
       } catch (error) {
-        console.error("🚨 Network error fetching employee:", error);
+        console.error("❌ Error fetching employee:", error);
         setEmployeeData(null);
-        alert("❌ Cannot connect to employee service. Make sure it's running on port 8088.");
+        
+        if (error.response?.status === 401) {
+          alert("❌ Session expired. Please login again.");
+        } else if (error.response?.status === 404) {
+          alert(`❌ Employee not found with ID: ${annualFormData.employeeId}`);
+        } else if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+          alert("❌ Cannot connect to employee service. Make sure it's running on port 8088.");
+        } else {
+          alert(`❌ Error fetching employee: ${error.message}`);
+        }
       } finally {
         setLoading(false);
       }
@@ -570,52 +503,36 @@ export default function Payroll() {
   const fetchAnnualStructures = async () => {
     try {
       console.log("🔍 Fetching annual structures...");
-      const response = await fetch("http://localhost:8089/api/payroll/annual-structures", {
-        method: "GET",
-        headers: {
-          "Authorization": getAuthHeader(),
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (response.ok) {
-        const structures = await response.json();
-        console.log("✅ Annual structures fetched:", structures.length);
-        setAnnualStructures(structures);
-        setCurrentPageStructures(1);
-      } else {
-        console.error("❌ Failed to fetch annual structures:", response.status);
-        alert("❌ Failed to fetch annual salary structures");
-      }
+      // ✅ CHANGED: Use axiosInstance with JWT
+      const response = await axiosInstance.get("http://localhost:8089/api/payroll/annual-structures");
+      console.log("✅ Annual structures fetched:", response.data.length);
+      setAnnualStructures(response.data);
+      setCurrentPageStructures(1);
     } catch (error) {
       console.error("🚨 Error fetching annual structures:", error);
-      alert("❌ Error fetching annual structures. Check if payroll service is running.");
+      if (error.response?.status === 401) {
+        alert("❌ Session expired. Please login again.");
+      } else {
+        alert("❌ Error fetching annual structures. Check if payroll service is running.");
+      }
     }
   };
 
   const fetchRealPayslips = async () => {
     try {
       console.log("🔍 Fetching payslips...");
-      const response = await fetch("http://localhost:8089/api/payroll/all", {
-        method: "GET",
-        headers: {
-          "Authorization": getAuthHeader(),
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (response.ok) {
-        const payslips = await response.json();
-        console.log("✅ Payslips fetched:", payslips.length);
-        setRealPayslips(payslips);
-        setCurrentPagePayslips(1);
-      } else {
-        console.error("❌ Failed to fetch payslips:", response.status);
-        alert("❌ Failed to fetch payslips");
-      }
+      // ✅ CHANGED: Use axiosInstance with JWT
+      const response = await axiosInstance.get("http://localhost:8089/api/payroll/all");
+      console.log("✅ Payslips fetched:", response.data.length);
+      setRealPayslips(response.data);
+      setCurrentPagePayslips(1);
     } catch (error) {
       console.error("🚨 Error fetching payslips:", error);
-      alert("❌ Error fetching payslips. Check if payroll service is running.");
+      if (error.response?.status === 401) {
+        alert("❌ Session expired. Please login again.");
+      } else {
+        alert("❌ Error fetching payslips. Check if payroll service is running.");
+      }
     }
   };
 
@@ -625,31 +542,34 @@ export default function Payroll() {
 
     try {
       console.log("🔍 Generating payslip...");
-      const response = await fetch(
-        `http://localhost:8089/api/payroll/generate?employeeId=${payslipFormData.employeeId}&month=${payslipFormData.month}&year=${payslipFormData.year}`,
+      // ✅ CHANGED: Use axiosInstance with JWT
+      const response = await axiosInstance.post(
+        `http://localhost:8089/api/payroll/generate`,
+        null,
         {
-          method: "POST",
-          headers: {
-            "Authorization": getAuthHeader(),
-            "Content-Type": "application/json",
-          },
+          params: {
+            employeeId: payslipFormData.employeeId,
+            month: payslipFormData.month,
+            year: payslipFormData.year
+          }
         }
       );
 
-      if (response.ok) {
-        const result = await response.json();
-        console.log("✅ Payslip generated:", result);
-        alert("✅ Payslip generated successfully!");
-        setShowPayslipModal(false);
-        resetPayslipForm();
-        fetchRealPayslips();
-      } else {
-        const errorText = await response.text();
-        throw new Error(`Server returned ${response.status}: ${errorText}`);
-      }
+      console.log("✅ Payslip generated:", response.data);
+      alert("✅ Payslip generated successfully!");
+      setShowPayslipModal(false);
+      resetPayslipForm();
+      fetchRealPayslips();
     } catch (error) {
       console.error("❌ Error generating payslip:", error);
-      alert("❌ Error generating payslip: " + error.message);
+      
+      if (error.response?.status === 401) {
+        alert("❌ Session expired. Please login again.");
+      } else if (error.response?.status === 404) {
+        alert("❌ Employee not found or no annual structure exists.");
+      } else {
+        alert("❌ Error generating payslip: " + error.message);
+      }
     } finally {
       setActionLoading(false);
     }
@@ -667,45 +587,37 @@ export default function Payroll() {
     setDownloadLoading(payslipId);
     
     try {
-      const url = `http://localhost:8089/api/payroll/download-payslip/${payslipId}`;
-      console.log("📡 Calling URL:", url);
+      // ✅ CHANGED: Use axiosInstance with JWT and blob response
+      const response = await axiosInstance.get(
+        `http://localhost:8089/api/payroll/download-payslip/${payslipId}`,
+        { responseType: 'blob' }
+      );
+
+      const blob = response.data;
       
-      const response = await fetch(url, {
-        method: "GET",
-        headers: {
-          "Authorization": getAuthHeader(),
-        },
-      });
-
-      console.log("📊 Response status:", response.status);
-
-      if (response.ok) {
-        const blob = await response.blob();
-        console.log("📄 Blob size:", blob.size);
-        
-        if (blob.size === 0) {
-          throw new Error('PDF file is empty');
-        }
-        
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `payslip_${payslipId}.pdf`;
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-        window.URL.revokeObjectURL(url);
-        
-        alert("✅ Payslip downloaded successfully!");
-        return true;
-      } else {
-        const errorText = await response.text();
-        console.error("❌ Server error response:", errorText);
-        throw new Error(`Server returned ${response.status}: ${errorText}`);
+      if (blob.size === 0) {
+        throw new Error('PDF file is empty');
       }
+      
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `payslip_${payslipId}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      
+      alert("✅ Payslip downloaded successfully!");
+      return true;
     } catch (error) {
       console.error("❌ Error downloading payslip:", error);
-      alert("❌ Error downloading payslip: " + error.message);
+      
+      if (error.response?.status === 401) {
+        alert("❌ Session expired. Please login again.");
+      } else {
+        alert("❌ Error downloading payslip: " + error.message);
+      }
       return false;
     } finally {
       setDownloadLoading(null);
@@ -715,40 +627,40 @@ export default function Payroll() {
   const downloadPayslipByMonth = async (employeeId, month, year, employeeName = "") => {
     setDownloadLoading(employeeId);
     try {
-      const response = await fetch(
-        `http://localhost:8089/api/payroll/download-payslip/by-month?employeeId=${employeeId}&month=${month}&year=${year}`,
+      // ✅ CHANGED: Use axiosInstance with JWT and blob response
+      const response = await axiosInstance.get(
+        `http://localhost:8089/api/payroll/download-payslip/by-month`,
         {
-          method: "GET",
-          headers: {
-            "Authorization": getAuthHeader(),
-          },
+          params: { employeeId, month, year },
+          responseType: 'blob'
         }
       );
 
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        
-        const filename = employeeName 
-          ? `payslip_${employeeName.replace(/\s+/g, '_')}_${month}_${year}.pdf`
-          : `payslip_${month}_${year}.pdf`;
-        
-        link.href = url;
-        link.download = filename;
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-        window.URL.revokeObjectURL(url);
-        
-        alert("✅ Payslip downloaded successfully!");
-        return true;
-      } else {
-        throw new Error('Failed to download payslip');
-      }
+      const blob = response.data;
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      
+      const filename = employeeName 
+        ? `payslip_${employeeName.replace(/\s+/g, '_')}_${month}_${year}.pdf`
+        : `payslip_${month}_${year}.pdf`;
+      
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      
+      alert("✅ Payslip downloaded successfully!");
+      return true;
     } catch (error) {
       console.error("❌ Error downloading payslip:", error);
-      alert("❌ Error downloading payslip: " + error.message);
+      
+      if (error.response?.status === 401) {
+        alert("❌ Session expired. Please login again.");
+      } else {
+        alert("❌ Error downloading payslip: " + error.message);
+      }
       return false;
     } finally {
       setDownloadLoading(null);

@@ -23,17 +23,23 @@ export default function Login() {
         password,
       });
 
-      // ✅ Extract correct fields from response
+      console.log("Login Response:", res.data); // Debugging - check what backend returns
+
+      // ⭐ IMPORTANT: Extract JWT token from response
+      const token = res.data.token || res.data.jwt || res.data.accessToken;
       const { role, id, name } = res.data;
 
+      if (!token) {
+        throw new Error("No token received from server");
+      }
+
       // ✅ Save credentials for secured endpoints
-      localStorage.setItem(
-        "authUser",
-        JSON.stringify({ username: email, password })
-      );
+      localStorage.setItem("jwt_token", token);
+      localStorage.setItem("user", JSON.stringify({ email, role, id, name }));
+
 
       // ✅ Pass the correct parameters: email, role, id (as employeeId), name (as employeeName)
-      login(email, role, id, name);
+      login(email, role, id, name,token);
     
       navigate("/dashboard");
     } catch (err) {

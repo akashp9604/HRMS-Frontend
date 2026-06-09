@@ -1,11 +1,11 @@
-import axios from "axios";
+import axiosInstance from "./axiosConfig";
 
 const BASE_URL = "http://localhost:8087/api/leaves";
 
 // ✅ Get all pending leaves
 export const getPendingLeaves = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/pending`);
+    const response = await axiosInstance.get(`${BASE_URL}/pending`);
     return response.data;
   } catch (error) {
     console.error("❌ Error fetching pending leaves:", error);
@@ -16,7 +16,7 @@ export const getPendingLeaves = async () => {
 // ✅ Get all leaves
 export const getAllLeaves = async () => {
   try {
-    const response = await axios.get(`${BASE_URL}/all`);
+    const response = await axiosInstance.get(`${BASE_URL}/all`);
     return response.data;
   } catch (error) {
     console.error("❌ Error fetching all leaves:", error);
@@ -27,7 +27,7 @@ export const getAllLeaves = async () => {
 // ✅ NEW: Credit leaves to employee (Allocate leaves)
 export const creditLeaves = async (leaveData) => {
   try {
-    const response = await axios.post(`${BASE_URL}/credit-leaves`, leaveData);
+    const response = await axiosInstance.post(`${BASE_URL}/credit-leaves`, leaveData);
     return response.data;
   } catch (error) {
     console.error("❌ Error crediting leaves:", error);
@@ -38,7 +38,7 @@ export const creditLeaves = async (leaveData) => {
 // ✅ Approve a leave by ID (send managerId)
 export const approveLeave = async (leaveId, managerId) => {
   try {
-    const response = await axios.put(`${BASE_URL}/approve/${leaveId}?managerId=${managerId}`);
+    const response = await axiosInstance.put(`${BASE_URL}/approve/${leaveId}?managerId=${managerId}`);
     return response.data;
   } catch (error) {
     console.error("❌ Error approving leave:", error);
@@ -49,7 +49,7 @@ export const approveLeave = async (leaveId, managerId) => {
 // ✅ Reject a leave by ID (send managerId)
 export const rejectLeave = async (leaveId, managerId) => {
   try {
-    const response = await axios.put(`${BASE_URL}/reject/${leaveId}?managerId=${managerId}`);
+    const response = await axiosInstance.put(`${BASE_URL}/reject/${leaveId}?managerId=${managerId}`);
     return response.data;
   } catch (error) {
     console.error("❌ Error rejecting leave:", error);
@@ -60,7 +60,7 @@ export const rejectLeave = async (leaveId, managerId) => {
 // ✅ Apply for a new leave (Single)
 export const applyLeave = async (leaveData) => {
   try {
-    const response = await axios.post(`${BASE_URL}/apply`, leaveData);
+    const response = await axiosInstance.post(`${BASE_URL}/apply`, leaveData);
     return response.data;
   } catch (error) {
     console.error("❌ Error applying for leave:", error);
@@ -71,7 +71,7 @@ export const applyLeave = async (leaveData) => {
 // ✅ NEW: Apply multiple leaves at once
 export const applyMultipleLeaves = async (leaveRequests) => {
   try {
-    const response = await axios.post(`${BASE_URL}/apply-multiple`, leaveRequests);
+    const response = await axiosInstance.post(`${BASE_URL}/apply-multiple`, leaveRequests);
     return response.data;
   } catch (error) {
     console.error("❌ Error applying multiple leaves:", error);
@@ -82,7 +82,7 @@ export const applyMultipleLeaves = async (leaveRequests) => {
 // ✅ Get leaves by employee ID
 export const getEmployeeLeaves = async (employeeId) => {
   try {
-    const response = await axios.get(`${BASE_URL}/employee/${employeeId}`);
+    const response = await axiosInstance.get(`${BASE_URL}/employee/${employeeId}`);
     return response.data;
   } catch (error) {
     console.error("❌ Error fetching employee leaves:", error);
@@ -93,7 +93,7 @@ export const getEmployeeLeaves = async (employeeId) => {
 // ✅ Get leave balance by employee ID
 export const getLeaveBalance = async (employeeId) => {
   try {
-    const response = await axios.get(`${BASE_URL}/leave-balance/${employeeId}`);
+    const response = await axiosInstance.get(`${BASE_URL}/leave-balance/${employeeId}`);
     return response.data;
   } catch (error) {
     console.error("❌ Error fetching leave balance:", error);
@@ -104,7 +104,7 @@ export const getLeaveBalance = async (employeeId) => {
 // ✅ Cancel a leave by ID
 export const cancelLeave = async (leaveId) => {
   try {
-    const response = await axios.put(`${BASE_URL}/cancel/${leaveId}`);
+    const response = await axiosInstance.put(`${BASE_URL}/cancel/${leaveId}`);
     return response.data;
   } catch (error) {
     console.error("❌ Error canceling leave:", error);
@@ -115,7 +115,7 @@ export const cancelLeave = async (leaveId) => {
 // ✅ NEW: Get monthly paid leave usage
 export const getMonthlyPaidLeaveUsage = async (employeeId, month, year) => {
   try {
-    const response = await axios.get(
+    const response = await axiosInstance.get(
       `${BASE_URL}/employee/${employeeId}/paid-leave-usage?month=${month}&year=${year}`
     );
     return response.data;
@@ -128,7 +128,7 @@ export const getMonthlyPaidLeaveUsage = async (employeeId, month, year) => {
 // ✅ NEW: Get converted leaves for employee
 export const getConvertedLeaves = async (employeeId) => {
   try {
-    const response = await axios.get(`${BASE_URL}/employee/${employeeId}/converted-leaves`);
+    const response = await axiosInstance.get(`${BASE_URL}/employee/${employeeId}/converted-leaves`);
     return response.data;
   } catch (error) {
     console.error("❌ Error fetching converted leaves:", error);
@@ -139,7 +139,7 @@ export const getConvertedLeaves = async (employeeId) => {
 // ✅ NEW: Get WFH days count for payroll
 export const getWFHDaysCount = async (employeeId, from, to) => {
   try {
-    const response = await axios.get(
+    const response = await axiosInstance.get(
       `${BASE_URL}/employee/${employeeId}/wfh-days?from=${from}&to=${to}`
     );
     return response.data;
@@ -152,7 +152,7 @@ export const getWFHDaysCount = async (employeeId, from, to) => {
 // ✅ NEW: Get leaves between dates for employee
 export const getLeavesBetweenDates = async (employeeId, from, to) => {
   try {
-    const response = await axios.get(
+    const response = await axiosInstance.get(
       `${BASE_URL}/employee/${employeeId}/between?from=${from}&to=${to}`
     );
     return response.data;
@@ -165,7 +165,7 @@ export const getLeavesBetweenDates = async (employeeId, from, to) => {
 // ✅ NEW: Get monthly leave summary
 export const getMonthlyLeaveSummary = async (employeeId, month, year) => {
   try {
-    const response = await axios.get(
+    const response = await axiosInstance.get(
       `${BASE_URL}/employee/${employeeId}/monthly-summary?month=${month}&year=${year}`
     );
     return response.data;
@@ -178,7 +178,7 @@ export const getMonthlyLeaveSummary = async (employeeId, month, year) => {
 // ✅ NEW: Initialize leave balances from attendance
 export const initializeLeaveBalances = async () => {
   try {
-    const response = await axios.post(`${BASE_URL}/init-from-attendance`);
+    const response = await axiosInstance.post(`${BASE_URL}/init-from-attendance`);
     return response.data;
   } catch (error) {
     console.error("❌ Error initializing leave balances:", error);
@@ -331,7 +331,7 @@ export const getCurrentMonthYear = () => {
 // ✅ NEW: Get employee details by ID
 export const getEmployeeDetails = async (employeeId) => {
   try {
-    const response = await axios.get(`http://localhost:8088/api/employees/${employeeId}`);
+    const response = await axiosInstance.get(`http://localhost:8088/api/employees/${employeeId}`);
     return response.data;
   } catch (error) {
     console.error("❌ Error fetching employee details:", error);
@@ -342,7 +342,7 @@ export const getEmployeeDetails = async (employeeId) => {
 export default {
   getPendingLeaves,
   getAllLeaves,
-  creditLeaves, // ✅ Added this
+  creditLeaves, 
   approveLeave,
   rejectLeave,
   applyLeave,

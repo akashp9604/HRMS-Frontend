@@ -1,6 +1,7 @@
 // OfferAcceptancePage.jsx
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import axiosInstance from '../apis/axiosConfig'; // ✅ Add JWT import
 
 const OfferAcceptancePage = () => {
     const [searchParams] = useSearchParams();
@@ -12,11 +13,12 @@ const OfferAcceptancePage = () => {
     const [message, setMessage] = useState('');
     const [employeeData, setEmployeeData] = useState(null);
 
-    const getAuthHeader = () => {
-        const username = "admin@gmail.com";
-        const password = "Admin@123";
-        return "Basic " + btoa(`${username}:${password}`);
-    };
+    // ❌ REMOVE this - No longer needed
+    // const getAuthHeader = () => {
+    //     const username = "admin@gmail.com";
+    //     const password = "Admin@123";
+    //     return "Basic " + btoa(`${username}:${password}`);
+    // };
 
     useEffect(() => {
         if (employeeId) {
@@ -25,14 +27,12 @@ const OfferAcceptancePage = () => {
         }
     }, [employeeId]);
 
+    // ✅ UPDATED: Fetch employee data with JWT
     const fetchEmployeeData = async () => {
         try {
-            const response = await fetch(`http://localhost:8088/api/employees/${employeeId}/package`, {
-                headers: { "Authorization": getAuthHeader() },
-            });
-            if (response.ok) {
-                const data = await response.json();
-                setEmployeeData(data);
+            const response = await axiosInstance.get(`http://localhost:8088/api/employees/${employeeId}/package`);
+            if (response.data) {
+                setEmployeeData(response.data);
             } else {
                 console.warn("Could not fetch employee data, using default info");
             }
@@ -41,14 +41,12 @@ const OfferAcceptancePage = () => {
         }
     };
 
+    // ✅ UPDATED: Check status with JWT
     const checkStatus = async () => {
         try {
-            const response = await fetch(`http://localhost:8089/api/payroll/offer-letter/status/${employeeId}`, {
-                headers: { "Authorization": getAuthHeader() },
-            });
-            if (response.ok) {
-                const data = await response.json();
-                setStatus(data);
+            const response = await axiosInstance.get(`http://localhost:8089/api/payroll/offer-letter/status/${employeeId}`);
+            if (response.data) {
+                setStatus(response.data);
             }
         } catch (error) {
             console.error('Error checking offer status:', error);
@@ -56,20 +54,20 @@ const OfferAcceptancePage = () => {
         }
     };
 
+    // ✅ UPDATED: Accept offer with JWT
     const handleAccept = async () => {
         setLoading(true);
         setMessage('');
         try {
-            const response = await fetch('http://localhost:8089/api/payroll/offer-letter/accept', {
-                method: 'POST',
-                headers: {
-                    'Authorization': getAuthHeader(),
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: `employeeId=${employeeId}`
-            });
+            const response = await axiosInstance.post(
+                'http://localhost:8089/api/payroll/offer-letter/accept',
+                null,
+                {
+                    params: { employeeId: employeeId }
+                }
+            );
             
-            const result = await response.json();
+            const result = response.data;
             if (result.success) {
                 if (result.emailSent) {
                     setMessage('✅ Offer accepted successfully! Check your email for direct download link. You can also download below.');
@@ -82,41 +80,49 @@ const OfferAcceptancePage = () => {
             }
         } catch (error) {
             console.error('Accept offer error:', error);
-            setMessage('❌ Error accepting offer: ' + error.message);
+            if (error.response?.status === 401) {
+                setMessage('❌ Authentication failed. Please contact HR for a valid offer link.');
+            } else {
+                setMessage('❌ Error accepting offer: ' + (error.response?.data?.message || error.message));
+            }
         } finally {
             setLoading(false);
         }
     };
 
+    // ✅ UPDATED: Download offer letter with JWT
     const handleDownload = async () => {
         setDownloadLoading(true);
         setMessage('');
         try {
             console.log("📥 Attempting to download offer letter for:", employeeId);
             
-            const response = await fetch(
-                `http://localhost:8089/api/payroll/offer-letter/download?employeeId=${employeeId}`,
+            const response = await axiosInstance.get(
+                `http://localhost:8089/api/payroll/offer-letter/download`,
                 {
-                    method: "GET",
-                    headers: { "Authorization": getAuthHeader() },
+                    params: { employeeId: employeeId },
+                    responseType: 'blob'
                 }
             );
 
             console.log("📊 Download response status:", response.status);
 
-            if (!response.ok) {
-                if (response.status === 403) {
-                    throw new Error('Offer must be accepted before downloading. Please accept the offer first.');
-                }
-                const errorText = await response.text();
-                throw new Error(`Download failed: ${response.status} - ${errorText}`);
-            }
-
-            const blob = await response.blob();
+            const blob = response.data;
             console.log("📄 PDF blob received, size:", blob.size);
 
             if (blob.size === 0) {
                 throw new Error('Received empty PDF file');
+            }
+
+            // Check if response is actually an error message (when blob is JSON)
+            if (blob.type === 'application/json') {
+                const text = await blob.text();
+                try {
+                    const errorData = JSON.parse(text);
+                    throw new Error(errorData.message || 'Failed to download offer letter');
+                } catch {
+                    throw new Error('Failed to download offer letter');
+                }
             }
 
             // Create filename with employee name
@@ -138,7 +144,13 @@ const OfferAcceptancePage = () => {
             
         } catch (error) {
             console.error('❌ Download failed:', error);
-            setMessage(`❌ ${error.message}`);
+            if (error.message.includes('accepted')) {
+                setMessage(`❌ ${error.message}`);
+            } else if (error.response?.status === 403) {
+                setMessage('❌ Offer must be accepted before downloading. Please accept the offer first.');
+            } else {
+                setMessage(`❌ ${error.message}`);
+            }
         } finally {
             setDownloadLoading(false);
         }

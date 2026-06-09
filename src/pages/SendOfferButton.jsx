@@ -1,16 +1,10 @@
 // SendOfferButton.jsx (for your admin panel)
 import React, { useState } from 'react';
+import axiosInstance from '../apis/axiosConfig'; // ✅ Add JWT import
 
 const SendOfferButton = ({ employeeId, employeeName }) => {
     const [sending, setSending] = useState(false);
     const [message, setMessage] = useState('');
-
-    // ==================== ADD THIS AUTH FUNCTION ====================
-    const getAuthHeader = () => {
-        const username = "admin@gmail.com";
-        const password = "Admin@123";
-        return "Basic " + btoa(`${username}:${password}`);
-    };
 
     const handleSendOffer = async () => {
         if (!employeeId) {
@@ -22,24 +16,27 @@ const SendOfferButton = ({ employeeId, employeeName }) => {
         setMessage('');
         
         try {
-            const response = await fetch('http://localhost:8089/api/payroll/offer-letter/send-offer', {
-                method: 'POST',
-                headers: {
-                    'Authorization': getAuthHeader(), // ADD AUTH HEADER
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: `employeeId=${employeeId}`
-            });
+            // ✅ CHANGED: Use axiosInstance with JWT
+            const response = await axiosInstance.post(
+                'http://localhost:8089/api/payroll/offer-letter/send-offer',
+                null,
+                {
+                    params: { employeeId: employeeId }
+                }
+            );
             
-            const result = await response.json();
-            if (response.ok && result.success) {
+            if (response.data && response.data.success) {
                 setMessage(`✅ Offer sent successfully to ${employeeName || employeeId}!`);
             } else {
-                setMessage(`❌ Failed to send offer: ${result.error || 'Unknown error'}`);
+                setMessage(`❌ Failed to send offer: ${response.data?.error || 'Unknown error'}`);
             }
         } catch (error) {
             console.error('Error sending offer:', error);
-            setMessage('❌ Error sending offer: ' + error.message);
+            if (error.response?.status === 401) {
+                setMessage('❌ Session expired. Please login again.');
+            } else {
+                setMessage('❌ Error sending offer: ' + (error.response?.data?.message || error.message));
+            }
         } finally {
             setSending(false);
         }

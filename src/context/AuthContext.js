@@ -4,61 +4,81 @@ export const AuthContext = createContext();
  
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
- 
-  // ✅ Load user from localStorage on app start
+  const [loading, setLoading] = useState(true);
+
+  // ✅ Load user from localStorage on app start (UPDATED for JWT)
   useEffect(() => {
-    const employeeData = JSON.parse(localStorage.getItem("employee"));
-    const adminData = JSON.parse(localStorage.getItem("admin"));
-   
-    if (employeeData) {
-      setUser(employeeData);
-    } else if (adminData) {
-      setUser(adminData);
+    // Check for JWT token first
+    const token = localStorage.getItem("jwt_token");
+    const userData = localStorage.getItem("user");
+    
+    if (token && userData) {
+      try {
+        const parsedUser = JSON.parse(userData);
+        setUser(parsedUser);
+        console.log("✅ User restored from JWT:", parsedUser);
+      } catch (error) {
+        console.error("Error parsing user data:", error);
+        localStorage.removeItem("jwt_token");
+        localStorage.removeItem("user");
+      }
     }
+    
+    // Clean up old storage keys (one-time migration)
+    localStorage.removeItem("authUser");
+    localStorage.removeItem("employee");
+    localStorage.removeItem("admin");
+    
+    setLoading(false);
   }, []);
  
-  // ✅ Enhanced login function with better role handling
-  const login = (email, role, employeeId, employeeName) => {
+  // ✅ Updated login function for JWT
+  const login = (email, role, employeeId, employeeName, token) => {
     // Normalize role to uppercase for consistent checks
     const normalizedRole = role?.toUpperCase();
     
     const userData = {
       email,
       role: normalizedRole,
-      employeeId,
-      employeeName,
+      id: employeeId,        // Consistent naming
+      employeeId: employeeId, // Keep for backward compatibility
+      name: employeeName,     // Consistent naming
+      employeeName: employeeName, // Keep for backward compatibility
       loginTime: new Date().toISOString()
     };
-   
-    // ✅ Save to localStorage based on role
-    if (normalizedRole === "ADMIN" || normalizedRole === "HR" || normalizedRole === "MANAGER") {
-      localStorage.removeItem("employee");
-      localStorage.setItem("admin", JSON.stringify(userData));
-      console.log("✅ Admin/HR/Manager logged in:", userData);
-    } else {
-      localStorage.removeItem("admin");
-      localStorage.setItem("employee", JSON.stringify(userData));
-      console.log("✅ Employee logged in:", userData);
-    }
-   
-    // Update context state
-    setUser(userData);
-  };
- 
-  // ✅ Enhanced logout function
-  const logout = () => {
-    // Clear state first
-    setUser(null);
-   
-    // Clear all localStorage items
+    
+    // ✅ Store JWT token and user data
+    localStorage.setItem("jwt_token", token);
+    localStorage.setItem("user", JSON.stringify(userData));
+    
+    // ✅ Clean up old storage keys
     localStorage.removeItem("authUser");
     localStorage.removeItem("employee");
     localStorage.removeItem("admin");
-   
-    console.log("✅ User logged out - all data cleared");
+    
+    // Update context state
+    setUser(userData);
+    console.log("✅ User logged in with JWT:", userData);
+  };
+ 
+  // ✅ Updated logout function
+  const logout = () => {
+    // Clear state first
+    setUser(null);
+    
+    // Clear all JWT-related localStorage items
+    localStorage.removeItem("jwt_token");
+    localStorage.removeItem("user");
+    
+    // Clean up any remaining old data
+    localStorage.removeItem("authUser");
+    localStorage.removeItem("employee");
+    localStorage.removeItem("admin");
+    
+    console.log("✅ User logged out - JWT cleared");
   };
 
-  // ✅ Check if user is admin
+  // ✅ Check if user is admin/manager/hr
   const isAdmin = () => {
     return user && (user.role === "ADMIN" || user.role === "HR" || user.role === "MANAGER");
   };
@@ -73,8 +93,11 @@ export const AuthProvider = ({ children }) => {
       user, 
       login, 
       logout,
+      loading,
       isAdmin: isAdmin(),
-      isEmployee: isEmployee()
+      isEmployee: isEmployee(),
+      // Convenience properties
+      token: localStorage.getItem("jwt_token")
     }}>
       {children}
     </AuthContext.Provider>

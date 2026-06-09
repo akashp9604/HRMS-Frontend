@@ -88,7 +88,7 @@ export default function Sidebar() {
       {/* User info footer */}
       {user && (
         <div className="mt-5 pt-4 border-top">
-          <small className="text-muted">
+          <small className="nav-link text-white">
             Logged in as: <br />
             <strong>{user.employeeName || user.email}</strong> <br />
             <span className="badge bg-info">{user.role}</span>

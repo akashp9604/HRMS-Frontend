@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
+import axiosInstance from "../apis/axiosConfig"; // ✅ Add JWT import
 
 export default function Profile() {
   const navigate = useNavigate();
@@ -26,32 +27,16 @@ export default function Profile() {
     fetchProfile();
   }, []);
 
+  // ✅ UPDATED: Fetch profile with JWT
   const fetchProfile = async () => {
     try {
       setLoading(true);
       setError("");
 
-      const authData = localStorage.getItem("authUser");
-      if (!authData) {
-        throw new Error("Authentication data not found");
-      }
+      // ✅ Use axiosInstance with JWT
+      const response = await axiosInstance.get("http://localhost:8088/api/employees/profile");
 
-      const { username, password } = JSON.parse(authData);
-      const authHeader = "Basic " + btoa(username + ":" + password);
-
-      const response = await fetch("http://localhost:8088/api/employees/profile", {
-        method: "GET",
-        headers: {
-          "Authorization": authHeader,
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch profile: ${response.status}`);
-      }
-
-      const profileData = await response.json();
+      const profileData = response.data;
       setProfile(profileData);
       setFormData({
         name: profileData.name || "",
@@ -61,8 +46,12 @@ export default function Profile() {
         department: profileData.department || ""
       });
     } catch (err) {
-      setError(err.message);
+      setError(err.response?.data?.message || err.message);
       console.error("Error fetching profile:", err);
+      if (err.response?.status === 401) {
+        setError("Session expired. Please login again.");
+        setTimeout(() => navigate("/login"), 2000);
+      }
     } finally {
       setLoading(false);
     }
@@ -93,35 +82,17 @@ export default function Profile() {
     }));
   };
 
+  // ✅ UPDATED: Update profile with JWT
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       setUpdateLoading(true);
       setUpdateMessage("");
 
-      const authData = localStorage.getItem("authUser");
-      if (!authData) {
-        throw new Error("Authentication data not found");
-      }
+      // ✅ Use axiosInstance with JWT
+      const response = await axiosInstance.put("http://localhost:8088/api/employees/profile", formData);
 
-      const { username, password } = JSON.parse(authData);
-      const authHeader = "Basic " + btoa(username + ":" + password);
-
-      const response = await fetch("http://localhost:8088/api/employees/profile", {
-        method: "PUT",
-        headers: {
-          "Authorization": authHeader,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData)
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Failed to update profile: ${response.status} - ${errorText}`);
-      }
-
-      const updatedProfile = await response.json();
+      const updatedProfile = response.data;
       setProfile(updatedProfile);
       setIsEditing(false);
       setUpdateMessage("Profile updated successfully!");
@@ -131,13 +102,18 @@ export default function Profile() {
       }, 3000);
 
     } catch (err) {
-      setUpdateMessage(`Error: ${err.message}`);
+      setUpdateMessage(`Error: ${err.response?.data?.message || err.message}`);
       console.error("Error updating profile:", err);
+      if (err.response?.status === 401) {
+        setUpdateMessage("Session expired. Please login again.");
+        setTimeout(() => navigate("/login"), 2000);
+      }
     } finally {
       setUpdateLoading(false);
     }
   };
 
+  // ✅ UPDATED: Upload profile image with JWT
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -157,33 +133,17 @@ export default function Profile() {
       setUpdateMessage("");
       setImageError(false);
 
-      const authData = localStorage.getItem("authUser");
-      if (!authData) {
-        throw new Error("Authentication data not found");
-      }
-
-      const { username, password } = JSON.parse(authData);
-      const authHeader = "Basic " + btoa(username + ":" + password);
-
       const formData = new FormData();
       formData.append("image", file);
 
-      const response = await fetch("http://localhost:8088/api/employees/profile/image", {
-        method: "POST",
+      // ✅ Use axiosInstance with JWT
+      const response = await axiosInstance.post("http://localhost:8088/api/employees/profile/image", formData, {
         headers: {
-          "Authorization": authHeader,
+          "Content-Type": "multipart/form-data",
         },
-        body: formData
       });
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Failed to upload image: ${response.status} - ${errorText}`);
-      }
-
-      const result = await response.text();
       setUpdateMessage("Profile image uploaded successfully!");
-      
       await fetchProfile();
       
       setTimeout(() => {
@@ -191,8 +151,12 @@ export default function Profile() {
       }, 3000);
 
     } catch (err) {
-      setUpdateMessage(`Error: ${err.message}`);
+      setUpdateMessage(`Error: ${err.response?.data?.message || err.message}`);
       console.error("Error uploading image:", err);
+      if (err.response?.status === 401) {
+        setUpdateMessage("Session expired. Please login again.");
+        setTimeout(() => navigate("/login"), 2000);
+      }
     } finally {
       setImageUploading(false);
       e.target.value = '';
@@ -207,6 +171,7 @@ export default function Profile() {
     if (profile.profileImage.startsWith('http')) {
       return profile.profileImage;
     } else {
+      // ✅ Use consistent URL for image endpoint (no auth needed as token will be added by interceptor)
       return `http://localhost:8088/api/employees/profile/image/${profile.id}`;
     }
   };
