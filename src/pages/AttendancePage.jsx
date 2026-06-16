@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import {
-  importDailyAttendance,
-  importAttendanceByDate,
+  getDailyAttendance,
   getPresentAbsentSummary,
   getMonthlySummary,
   getEmployeesFromAttendance,
@@ -74,14 +73,15 @@ const AttendancePage = () => {
 
   // Load Today's Attendance
   const loadTodayAttendance = async () => {
-    try {
-      const data = await importDailyAttendance();
-      setAttendance(data || []);
-      setCurrentPage(1);
-    } catch (err) {
-      console.error("Error fetching today's attendance:", err);
-    }
-  };
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    const data = await getDailyAttendance(today);  
+    setAttendance(data || []);
+    setCurrentPage(1);
+  } catch (err) {
+    console.error("Error fetching today's attendance:", err);
+  }
+};
 
   const loadSummary = async (selectedDate) => {
     try {
@@ -93,17 +93,17 @@ const AttendancePage = () => {
   };
 
   const handleDateChange = async (newDate) => {
-    const formattedDate = new Date(newDate).toISOString().split("T")[0];
-    setDate(formattedDate);
-    try {
-      const data = await importAttendanceByDate(formattedDate);
-      setAttendance(data || []);
-      setCurrentPage(1);
-      loadSummary(formattedDate);
-    } catch (error) {
-      console.error("Error fetching attendance by date:", error);
-    }
-  };
+  const formattedDate = new Date(newDate).toISOString().split("T")[0];
+  setDate(formattedDate);
+  try {
+    const data = await getDailyAttendance(formattedDate);  
+    setAttendance(data || []);
+    setCurrentPage(1);
+    loadSummary(formattedDate);
+  } catch (error) {
+    console.error("Error fetching attendance by date:", error);
+  }
+};
 
   const loadEmployees = async () => {
     try {
