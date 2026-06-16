@@ -29,7 +29,7 @@ const LeaveManagementPage = () => {
     employeeId: "",
     employeeName: "",
     leaveType: "SICK",
-    numberOfLeaves: 10,
+    daysToCredit: 10,
     creditDate: new Date().toISOString().split('T')[0],
     financialYear: "2025-2026",
     yearlyAllocation: true
