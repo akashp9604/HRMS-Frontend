@@ -164,7 +164,7 @@ export default function Payroll() {
     
     try {
       // ✅ CHANGED: Use axiosInstance with JWT
-      const statusResponse = await axiosInstance.get(`http://localhost:8089/api/payroll/offer-letter/status/${employeeId}`);
+      const statusResponse = await axiosInstance.get(`http://localhost:8092/api/payroll/offer-letter/status/${employeeId}`);
 
       if (statusResponse.data && !statusResponse.data.accepted) {
         alert("❌ Offer must be accepted before downloading.\n\nPlease send the offer letter to the employee first and wait for them to accept it.");
@@ -173,7 +173,7 @@ export default function Payroll() {
 
       // ✅ CHANGED: Use axiosInstance with blob response
       const response = await axiosInstance.get(
-        `http://localhost:8089/api/payroll/offer-letter/download`,
+        `http://localhost:8092/api/payroll/offer-letter/download`,
         {
           params: { employeeId: employeeId },
           responseType: 'blob'
@@ -222,7 +222,7 @@ export default function Payroll() {
       } else if (error.response?.status === 404) {
         alert("❌ Employee not found or offer letter data unavailable");
       } else if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
-        alert("❌ Network error: Cannot connect to server. Please check:\n• Server is running on localhost:8089\n• CORS is enabled\n• Network connectivity");
+        alert("❌ Network error: Cannot connect to server. Please check:\n• Server is running on localhost:8092\n• CORS is enabled\n• Network connectivity");
       } else {
         alert("❌ Error downloading offer letter: " + error.message);
       }
@@ -276,7 +276,7 @@ export default function Payroll() {
     try {
       // ✅ CHANGED: Use axiosInstance with JWT
       const response = await axiosInstance.post(
-        `http://localhost:8089/api/payroll/offer-letter/send`,
+        `http://localhost:8092/api/payroll/offer-letter/send`,
         {
           employeeId: employeeId,
           employeeEmail: employeeEmail,
@@ -297,7 +297,7 @@ export default function Payroll() {
       if (error.response?.status === 401) {
         alert("❌ Session expired. Please login again.");
       } else if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
-        alert("❌ Network error: Cannot connect to server. Please check if server is running on localhost:8089");
+        alert("❌ Network error: Cannot connect to server. Please check if server is running on localhost:8092");
       } else {
         alert("❌ Error sending offer letter: " + error.message);
       }
@@ -323,7 +323,7 @@ export default function Payroll() {
       
       // ✅ CHANGED: Use axiosInstance with JWT
       const response = await axiosInstance.post(
-        `http://localhost:8089/api/payroll/annual-structure`,
+        `http://localhost:8092/api/payroll/annual-structure`,
         null,
         {
           params: { employeeId: employeeId }
@@ -347,7 +347,7 @@ export default function Payroll() {
       } else if (error.response?.status === 500) {
         alert("❌ Server error. Please check if all services are running.");
       } else if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
-        alert("❌ Network error. Please check if payroll service is running on port 8089.");
+        alert("❌ Network error. Please check if payroll service is running on port 8092.");
       } else {
         alert(`❌ Error: ${error.message}`);
       }
@@ -504,7 +504,7 @@ export default function Payroll() {
     try {
       console.log("🔍 Fetching annual structures...");
       // ✅ CHANGED: Use axiosInstance with JWT
-      const response = await axiosInstance.get("http://localhost:8089/api/payroll/annual-structures");
+      const response = await axiosInstance.get("http://localhost:8092/api/payroll/annual-structures");
       console.log("✅ Annual structures fetched:", response.data.length);
       setAnnualStructures(response.data);
       setCurrentPageStructures(1);
@@ -522,7 +522,7 @@ export default function Payroll() {
     try {
       console.log("🔍 Fetching payslips...");
       // ✅ CHANGED: Use axiosInstance with JWT
-      const response = await axiosInstance.get("http://localhost:8089/api/payroll/all");
+      const response = await axiosInstance.get("http://localhost:8092/api/payroll/all");
       console.log("✅ Payslips fetched:", response.data.length);
       setRealPayslips(response.data);
       setCurrentPagePayslips(1);
@@ -544,7 +544,7 @@ export default function Payroll() {
       console.log("🔍 Generating payslip...");
       // ✅ CHANGED: Use axiosInstance with JWT
       const response = await axiosInstance.post(
-        `http://localhost:8089/api/payroll/generate`,
+        `http://localhost:8092/api/payroll/generate`,
         null,
         {
           params: {
@@ -589,7 +589,7 @@ export default function Payroll() {
     try {
       // ✅ CHANGED: Use axiosInstance with JWT and blob response
       const response = await axiosInstance.get(
-        `http://localhost:8089/api/payroll/download-payslip/${payslipId}`,
+        `http://localhost:8092/api/payroll/download-payslip/${payslipId}`,
         { responseType: 'blob' }
       );
 
@@ -629,7 +629,7 @@ export default function Payroll() {
     try {
       // ✅ CHANGED: Use axiosInstance with JWT and blob response
       const response = await axiosInstance.get(
-        `http://localhost:8089/api/payroll/download-payslip/by-month`,
+        `http://localhost:8092/api/payroll/download-payslip/by-month`,
         {
           params: { employeeId, month, year },
           responseType: 'blob'

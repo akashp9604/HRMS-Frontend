@@ -18,7 +18,7 @@ const SendOfferButton = ({ employeeId, employeeName }) => {
         try {
             // ✅ CHANGED: Use axiosInstance with JWT
             const response = await axiosInstance.post(
-                'http://localhost:8089/api/payroll/offer-letter/send-offer',
+                'http://localhost:8092/api/payroll/offer-letter/send-offer',
                 null,
                 {
                     params: { employeeId: employeeId }

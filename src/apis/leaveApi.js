@@ -1,6 +1,6 @@
 import axiosInstance from "./axiosConfig";
 
-const BASE_URL = "http://localhost:8087/api/leaves";
+const BASE_URL = "http://localhost:8093/api/leaves";
 
 // ✅ Get all pending leaves
 export const getPendingLeaves = async () => {

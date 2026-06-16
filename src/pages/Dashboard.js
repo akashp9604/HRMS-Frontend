@@ -46,7 +46,7 @@ export default function Dashboard() {
         const year = now.getFullYear();
 
         const response = await axiosInstance.get(
-          `http://localhost:8089/api/payroll/total-payroll?month=${month}&year=${year}`
+          `http://localhost:8092/api/payroll/total-payroll?month=${month}&year=${year}`
         );
         const total = typeof response.data === "object" ? response.data.totalPayroll : response.data;
         setMonthlyPayroll(total || 0);
@@ -63,7 +63,7 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchPendingLeaves = async () => {
       try {
-        const response = await axiosInstance.get("http://localhost:8087/api/leaves/pending/count");
+        const response = await axiosInstance.get("http://localhost:8093/api/leaves/pending/count");
         const count = typeof response.data === "object" ? response.data.count : response.data;
         setPendingLeaves(count || 0);
       } catch (error) {
@@ -79,7 +79,7 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchPayslipCount = async () => {
       try {
-        const response = await axiosInstance.get("http://localhost:8089/api/payroll/payslip/count");
+        const response = await axiosInstance.get("http://localhost:8092/api/payroll/payslip/count");
         const count = typeof response.data === "object" ? response.data.count : response.data;
         setPayslipCount(count || 0);
       } catch (error) {
@@ -99,7 +99,7 @@ export default function Dashboard() {
         const dateString = today.toISOString().split("T")[0];
 
         const response = await axiosInstance.get(
-          `http://localhost:8085/api/attendance/present-absent-summary?date=${dateString}`
+          `http://localhost:8094/api/attendance/present-absent-summary?date=${dateString}`
         );
         
         console.log("Attendance API Response:", response.data);

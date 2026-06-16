@@ -82,7 +82,7 @@ const EmployeeReportTab = () => {
 
       // ✅ Use axiosInstance with JWT
       const response = await axiosInstance.post(
-        `http://localhost:8089/api/payroll/generate?employeeId=${employeeId}&month=${formData.month}&year=${formData.year}`
+        `http://localhost:8092/api/payroll/generate?employeeId=${employeeId}&month=${formData.month}&year=${formData.year}`
       );
 
       setPayslipData(response.data);
@@ -121,7 +121,7 @@ const EmployeeReportTab = () => {
 
       // ✅ Use axiosInstance with JWT
       const response = await axiosInstance.get(
-        `http://localhost:8089/api/payroll/download-payslip/by-month?employeeId=${employeeId}&month=${formData.month}&year=${formData.year}`,
+        `http://localhost:8092/api/payroll/download-payslip/by-month?employeeId=${employeeId}&month=${formData.month}&year=${formData.year}`,
         {
           responseType: 'blob'
         }
@@ -169,7 +169,7 @@ const EmployeeReportTab = () => {
 
       // ✅ Use axiosInstance with JWT
       const response = await axiosInstance.get(
-        `http://localhost:8089/api/payroll/offer-letter/generate?employeeId=${employeeId}`,
+        `http://localhost:8092/api/payroll/offer-letter/generate?employeeId=${employeeId}`,
         {
           responseType: 'blob'
         }

@@ -44,7 +44,7 @@ const OfferAcceptancePage = () => {
     // ✅ UPDATED: Check status with JWT
     const checkStatus = async () => {
         try {
-            const response = await axiosInstance.get(`http://localhost:8089/api/payroll/offer-letter/status/${employeeId}`);
+            const response = await axiosInstance.get(`http://localhost:8092/api/payroll/offer-letter/status/${employeeId}`);
             if (response.data) {
                 setStatus(response.data);
             }
@@ -60,7 +60,7 @@ const OfferAcceptancePage = () => {
         setMessage('');
         try {
             const response = await axiosInstance.post(
-                'http://localhost:8089/api/payroll/offer-letter/accept',
+                'http://localhost:8092/api/payroll/offer-letter/accept',
                 null,
                 {
                     params: { employeeId: employeeId }
@@ -98,7 +98,7 @@ const OfferAcceptancePage = () => {
             console.log("📥 Attempting to download offer letter for:", employeeId);
             
             const response = await axiosInstance.get(
-                `http://localhost:8089/api/payroll/offer-letter/download`,
+                `http://localhost:8092/api/payroll/offer-letter/download`,
                 {
                     params: { employeeId: employeeId },
                     responseType: 'blob'

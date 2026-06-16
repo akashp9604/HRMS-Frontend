@@ -220,7 +220,7 @@ const EmployeeLeavePage = () => {
 
     try {
       // ✅ CHANGED: Use axiosInstance with JWT
-      const response = await axiosInstance.get(`http://localhost:8087/api/employees/${managerId}`);
+      const response = await axiosInstance.get(`http://localhost:8093/api/employees/${managerId}`);
       const managerName = response.data.name || "Manager";
       
       // Cache the manager name
@@ -267,7 +267,7 @@ const EmployeeLeavePage = () => {
 
       // ✅ CHANGED: Use axiosInstance instead of axios
       const response = await axiosInstance.get(
-        `http://localhost:8085/api/attendance/employee/${employeeId}/daily`,
+        `http://localhost:8094/api/attendance/employee/${employeeId}/daily`,
         {
           params: {
             date: dateStr
@@ -422,9 +422,9 @@ const EmployeeLeavePage = () => {
       console.log("📊 Starting data fetch for employee:", currentEmployeeId);
       
       const [balanceRes, leavesRes, holidaysRes] = await Promise.all([
-        axiosInstance.get(`http://localhost:8087/api/leaves/leave-balance/${currentEmployeeId}`),
-        axiosInstance.get(`http://localhost:8087/api/leaves/employee/${currentEmployeeId}`),
-        axiosInstance.get(`http://localhost:8087/api/holidays/between`, {
+        axiosInstance.get(`http://localhost:8093/api/leaves/leave-balance/${currentEmployeeId}`),
+        axiosInstance.get(`http://localhost:8093/api/leaves/employee/${currentEmployeeId}`),
+        axiosInstance.get(`http://localhost:8093/api/holidays/between`, {
           params: {
             from: "2025-01-01",
             to: "2025-12-31",
@@ -461,7 +461,7 @@ const EmployeeLeavePage = () => {
     try {
       const currentDate = new Date();
       const response = await axiosInstance.get(
-        `http://localhost:8087/api/leaves/employee/${currentEmployeeId}/paid-leave-usage?month=${currentDate.getMonth() + 1}&year=${currentDate.getFullYear()}`
+        `http://localhost:8093/api/leaves/employee/${currentEmployeeId}/paid-leave-usage?month=${currentDate.getMonth() + 1}&year=${currentDate.getFullYear()}`
       );
       setPaidLeaveUsage(response.data);
     } catch (err) {
@@ -479,7 +479,7 @@ const EmployeeLeavePage = () => {
     try {
       console.log("🔍 Fetching leave requests for employee:", currentEmployeeId);
       
-      const response = await axiosInstance.get(`http://localhost:8087/api/leaves/employee/${currentEmployeeId}`);
+      const response = await axiosInstance.get(`http://localhost:8093/api/leaves/employee/${currentEmployeeId}`);
       
       console.log("✅ API Response:", response);
       console.log("✅ Response Data:", response.data);
@@ -510,7 +510,7 @@ const EmployeeLeavePage = () => {
     try {
       console.log("🗑️ Cancelling leave:", leaveId);
       
-      const response = await axiosInstance.put(`http://localhost:8087/api/leaves/cancel/${leaveId}`);
+      const response = await axiosInstance.put(`http://localhost:8093/api/leaves/cancel/${leaveId}`);
       
       console.log("✅ Leave cancelled successfully:", response.data);
       setSuccessMsg("✅ Leave request cancelled successfully!");
@@ -604,7 +604,7 @@ const EmployeeLeavePage = () => {
       if (isEditMode) {
         // ✅ CHANGED: Use axiosInstance
         response = await axiosInstance.put(
-          `http://localhost:8087/api/leaves/edit/${editingLeave.id}`,
+          `http://localhost:8093/api/leaves/edit/${editingLeave.id}`,
           leaveData
         );
         console.log("✅ Leave request updated successfully!");
@@ -622,7 +622,7 @@ const EmployeeLeavePage = () => {
           formData.append("document", medicalDocument);
 
           response = await axiosInstance.post(
-            "http://localhost:8087/api/leaves/apply",
+            "http://localhost:8093/api/leaves/apply",
             formData,
             {
               headers: {
@@ -633,7 +633,7 @@ const EmployeeLeavePage = () => {
         } else {
           // For leaves without a file
           response = await axiosInstance.post(
-            "http://localhost:8087/api/leaves/apply",
+            "http://localhost:8093/api/leaves/apply",
             leaveData
           );
         }

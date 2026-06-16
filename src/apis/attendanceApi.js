@@ -1,6 +1,6 @@
 import axiosInstance from "./axiosConfig";
 
-const API_URL = "http://localhost:8085/api/attendance"; 
+const API_URL = "http://localhost:8094/api/attendance"; 
 const EMPLOYEE_API_URL = "http://localhost:8081/api/employees";
 
 // ✅ Import daily attendance from third-party (POST)
@@ -94,7 +94,7 @@ export const getPresentAbsentSummary = async (date) => {
 export const getEmployeeDailyAttendance = async (employeeId, date) => {
   try {
     const response = await axiosInstance.get(
-      `http://localhost:8085/api/attendance/employee/${employeeId}/daily?date=${date}`
+      `http://localhost:8094/api/attendance/employee/${employeeId}/daily?date=${date}`
     );
     return response.data;
   } catch (error) {
@@ -107,7 +107,7 @@ export const getEmployeeDailyAttendance = async (employeeId, date) => {
 export const getEmployeeMonthlyDetails = async (employeeId, startDate, endDate) => {
   try {
     const response = await axiosInstance.get(
-      `http://localhost:8085/api/attendance/employee-monthly-details?employeeId=${employeeId}&startDate=${startDate}&endDate=${endDate}`
+      `http://localhost:8094/api/attendance/employee-monthly-details?employeeId=${employeeId}&startDate=${startDate}&endDate=${endDate}`
     );
     return response.data;
   } catch (error) {

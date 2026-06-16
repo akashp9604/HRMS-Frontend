@@ -4,6 +4,7 @@ import StatCard from "../components/StatCard";
 import { AuthContext } from "../context/AuthContext";
 
 export default function EmployeeDashboard() {
+  
   const { user } = useContext(AuthContext); // ✅ Get user from JWT context
   const [leaveStats, setLeaveStats] = useState({
     approvedLeaves: 0,
@@ -52,8 +53,8 @@ export default function EmployeeDashboard() {
         
         // ✅ Use axiosInstance instead of axios with headers
         const [balanceResponse, leavesResponse] = await Promise.all([
-          axiosInstance.get(`http://localhost:8087/api/leaves/leave-balance/${employeeId}`),
-          axiosInstance.get(`http://localhost:8087/api/leaves/employee/${employeeId}`)
+          axiosInstance.get(`http://localhost:8093/api/leaves/leave-balance/${employeeId}`),
+          axiosInstance.get(`http://localhost:8093/api/leaves/employee/${employeeId}`)
         ]);
         
         const leaves = leavesResponse.data || [];
@@ -92,7 +93,7 @@ export default function EmployeeDashboard() {
 
         // ✅ Use axiosInstance instead of axios
         const response = await axiosInstance.get(
-          `http://localhost:8085/api/attendance/employee/${employeeId}/monthly-summary`,
+          `http://localhost:8094/api/attendance/employee/${employeeId}/monthly-summary`,
           {
             params: {
               month: selectedMonthYear
