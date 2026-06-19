@@ -827,7 +827,7 @@ export default function Payroll() {
                     {currentPayslips
                       .filter(p => filterStatus === "All Status" || p.status === filterStatus)
                       .map((payslip, index) => {
-                        const payslipId = payslip.id || payslip.payslipId || index;
+                        const payslipId = payslip.id || payslip.payslipId || (index + 1);
                         
                         return (
                           <tr key={payslipId}>
