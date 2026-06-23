@@ -77,7 +77,7 @@ function ProtectedAttendancePage() {
   if (!user) return <Login />;
 
   // Role-based rendering for attendance
-  if (user.role?.toUpperCase() === "ADMIN" || user.role?.toUpperCase() === "MANAGER") {
+  if (user.role?.toUpperCase() === "ADMIN" || user.role?.toUpperCase() === "MANAGER" || user.role?.toUpperCase() === "HR" ) {
     return <LayoutWrapper><AttendancePage /></LayoutWrapper>;
   } else {
     return <LayoutWrapper><EmployeeAttendance employeeId={user.employeeId} /></LayoutWrapper>;

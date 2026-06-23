@@ -1,7 +1,7 @@
 import axiosInstance from "./axiosConfig";
 
 const API_URL = "http://localhost:8094/api/attendance"; 
-const EMPLOYEE_API_URL = "http://localhost:8081/api/employees";
+const EMPLOYEE_API_URL = "http://localhost:8088/api/employees";
 
 // ✅ Import daily attendance from third-party (POST)
 export const importDailyAttendance = async () => {
